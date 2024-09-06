@@ -10,7 +10,7 @@
         <padding>
             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
         </padding>
-        <Pane prefHeight="316.0" prefWidth="492.0">
+        <Pane fx:id ="pane" prefHeight="316.0" prefWidth="492.0">
             <ImageView fx:id="imageView" fitHeight="316.0" fitWidth="492.0" preserveRatio="true" />
         </Pane>
         <Label text="Primary View" />

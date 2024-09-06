@@ -9,41 +9,64 @@ import java.net.Socket;
 
 public class TCPSendUtil {
     private final Socket client;
+    private final DataOutputStream dos;
 
-    public TCPSendUtil(Socket client) throws IOException {
+    public TCPSendUtil(Socket client) {
         this.client = client;
+        try {
+            this.dos = new DataOutputStream(this.client.getOutputStream());
+        } catch (IOException e) {
+            release();
+            throw new RuntimeException(e);
+        }
     }
 
-    public void sendUTF(String msg) {
+    // 发送信息
+    public void sendUTF(String msg)
+    {
         try {
-            DataOutputStream dos = new DataOutputStream(this.client.getOutputStream());
             dos.writeUTF(msg);
             dos.flush();
         } catch (IOException e) {
-            release();
+            e.printStackTrace();
             System.out.println("发送字符串信息失败");
         }
     }
 
+    // 发送 对象
+    public void sendObject(Object obj)
+    {
+        try {
+            ObjectOutputStream dos = new ObjectOutputStream(this.client.getOutputStream());
+            dos.writeObject(obj);
+            dos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            release();
+            System.out.println("发送监听事件失败");
+        }
+    }
+
     // 发送图片
-    private void sendImg(byte[] imageBytes) {
+    public void sendImg(byte[] imageBytes) {
         try {
             // 首先发送图像数据的长度
-            DataOutputStream dos = new DataOutputStream(this.client.getOutputStream());
             dos.writeInt(imageBytes.length);
             // 然后发送图像数据
             dos.write(imageBytes);
             dos.flush();
         } catch (IOException e) {
+            e.printStackTrace();
+            release();
             System.err.println("发送图片数据出错");
         }
     }
 
     // 压缩图片
-    public static byte[] getImageBytes(BufferedImage image) throws IOException {
+    public byte[] getImageBytes(BufferedImage image) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             // 获取 JPEG 格式的 ImageWriter
-            ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+            ImageWriter writer = ImageIO.getImageWritersByFormatName("png").next();
 
             // 设置压缩参数
             ImageWriteParam param = writer.getDefaultWriteParam();
@@ -56,6 +79,8 @@ public class TCPSendUtil {
 
             // 返回字节数组
             return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
