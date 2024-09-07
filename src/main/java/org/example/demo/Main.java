@@ -14,13 +14,15 @@ import java.net.Socket;
 public class Main extends Application {
 
     public static LoginController loginController;
-    private static Scene scene;
+    public static Scene scene;
+    public static Stage stage;
 
     @Override
      public void start(Stage stage) throws IOException {
-        Client.client = new Socket("localhost", 8888);
+        this.stage = stage;
+        //Client.client = new Socket("localhost", 8888);
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("hello-view.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("openFlash.fxml"));
         Parent root = loader.load();
         scene = new Scene(root, 640, 480);
 
@@ -29,7 +31,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        launch(LoginApp.class);
+        launch();
     }
 
     public static void setRoot(String fxml) throws IOException {
