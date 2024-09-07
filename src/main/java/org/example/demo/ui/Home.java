@@ -179,30 +179,90 @@ public class Home extends Application {
 
         searchField = new TextField();
         searchField.setPromptText("搜索...");
-
-        // 设置搜索框的样式
-        searchField.setStyle("-fx-background-color: #ffffff; " +      // 背景色
-                "-fx-border-color: #cccccc; " +         // 边框色
-                "-fx-border-width: 2px; " +            // 边框宽度
-                "-fx-border-radius: 10px; " +          // 边框弧度
-                "-fx-background-radius: 10px; " +      // 背景弧度
-                "-fx-padding: 5px; " +                 // 内边距
-                "-fx-font-size: 14px; " +              // 字体大小
-                "-fx-pref-width: 550px;");             // 预期宽度
+        searchField.setStyle("-fx-background-color: #ffffff; " +
+                "-fx-border-color: #cccccc; " +
+                "-fx-border-width: 2px; " +
+                "-fx-border-radius: 10px; " +
+                "-fx-background-radius: 10px; " +
+                "-fx-padding: 5px; " +
+                "-fx-font-size: 14px; " +
+                "-fx-pref-width: 550px;");
 
         HBox searchBox = new HBox(searchField);
         searchBox.setPadding(new Insets(10));
         searchBox.setAlignment(Pos.CENTER_RIGHT);
 
+        // 创建Popup来展示推荐用户
+        Popup recommendationPopup = new Popup();
+        ListView<HBox> recommendationList = new ListView<>();
+        recommendationList.setPrefWidth(searchField.getPrefWidth());
+
+        for (int i = 1; i <= 5; i++) {
+            HBox itemBox = createRecommendationItem("XX0" + i);
+            recommendationList.getItems().add(itemBox);
+        }
+
+        recommendationPopup.getContent().add(recommendationList);
+
+        // 搜索框点击事件
+        searchField.setOnMouseClicked(e -> {
+            if (!recommendationPopup.isShowing()) {
+                Window window = searchField.getScene().getWindow();
+                recommendationList.setPrefWidth(searchField.getWidth());
+                recommendationPopup.show(window, window.getX() + searchField.localToScene(0, 0).getX() + searchField.getScene().getX(),
+                        window.getY() + searchField.localToScene(0, 0).getY() + searchField.getHeight() + searchField.getScene().getY());
+            }
+        });
+
+        // 关闭推荐框的逻辑
+        root.setOnMouseClicked(e -> {
+            if (!searchField.isFocused() && recommendationPopup.isShowing()) {
+                recommendationPopup.hide();
+            }
+        });
+
+        // 确保搜索框保持焦点时，不会关闭推荐框
+        searchField.setOnKeyPressed(e -> {
+            if (!recommendationPopup.isShowing()) {
+                recommendationPopup.show(searchField, searchField.getLayoutX(), searchField.getLayoutY() + searchField.getHeight());
+            }
+        });
+
+        // 添加到主面板
         root.setTop(searchBox);
 
-        Scene scene = new Scene(root, 800, 600); // 设置整体界面大小为800x600
-
+        Scene scene = new Scene(root, 800, 600);
         Main.scene = scene;
-        Main.stage.setScene(scene);
-        Main.stage.show();
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
+    private HBox createRecommendationItem(String userName) {
+        HBox itemBox = new HBox(10);
+        itemBox.setAlignment(Pos.CENTER_LEFT);
+        itemBox.setPadding(new Insets(10));
+        itemBox.setStyle("-fx-background-color: white; " +
+                "-fx-border-color: lightgray; " +
+                "-fx-border-radius: 5px; " +
+                "-fx-background-radius: 5px;");
 
+        Label userLabel = new Label(userName);
+        userLabel.setStyle("-fx-font-family: '微软雅黑'; -fx-font-size: 14px;");
+
+        Button addButton = new Button("加好友");
+        addButton.setStyle("-fx-background-color: lightblue; " +
+                "-fx-border-radius: 5px; " +
+                "-fx-background-radius: 5px;");
+
+        addButton.setOnAction(e -> {
+            System.out.println("添加好友: " + userName);
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        itemBox.getChildren().addAll(userLabel, spacer, addButton);
+        return itemBox;
+    }
     private void displayUserInfo() {
         // 显示用户基本信息
         VBox userInfoBox = new VBox(10);
