@@ -2,6 +2,7 @@ package org.example.demo.utils;
 
 import javafx.scene.input.*;
 
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,12 +34,14 @@ public class RemoteControlUtil{
             throw new IllegalArgumentException("MouseEvent cannot be null");
         }
 
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
         String eventType = e.getEventType().getName(); // Get event type name as a string
         int x = (int) e.getX();
         int y = (int) e.getY();
 
         if (eventType.equals("MOUSE_MOVED") || eventType.equals("MOUSE_DRAGGED"))
-            return "mouseMoved#" + x + "#" + y;
+            return "mouseMoved#" + x + "#" + y + "#" + screenSize.width + "#" + screenSize.height;
         else if (eventType.equals("MOUSE_PRESSED")) {
             int mouseKey = getMouseKey(e.getButton());
             return "mousePressed#" + mouseKey;

@@ -62,16 +62,15 @@ public class TCPSendUtil {
         }
     }
 
-    // 压缩图片
     public byte[] getImageBytes(BufferedImage image) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             // 获取 JPEG 格式的 ImageWriter
-            ImageWriter writer = ImageIO.getImageWritersByFormatName("png").next();
+            ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
 
             // 设置压缩参数
             ImageWriteParam param = writer.getDefaultWriteParam();
             param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            param.setCompressionQuality(0.75f); // 设置压缩质量（0.0f 到 1.0f）
+            param.setCompressionQuality(0.85f); // 0.85f 是一个合理的值，接近1.0f 可以保持较高质量
 
             // 将图像写入 ByteArrayOutputStream
             writer.setOutput(ImageIO.createImageOutputStream(baos));

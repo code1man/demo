@@ -6,7 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.example.demo.controller.LoginController;
-import org.example.demo.ui.LoginApp;
+import org.example.demo.utils.CameraUtil;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -19,17 +19,22 @@ public class Main extends Application {
     @Override
      public void start(Stage stage) throws IOException {
         Client.client = new Socket("localhost", 8888);
+        Client.secondClient = new Socket("localhost", 7777);
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("hello-view.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("Login.fxml"));
         Parent root = loader.load();
+        loginController = loader.getController();
         scene = new Scene(root, 640, 480);
+
+        CameraUtil cameraUtil = new CameraUtil();
+        cameraUtil.openVideoModule();
 
         stage.setScene(scene);
         stage.show();
     }
 
     public static void main(String[] args) {
-        launch(LoginApp.class);
+        launch();
     }
 
     public static void setRoot(String fxml) throws IOException {

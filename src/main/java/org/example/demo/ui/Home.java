@@ -315,7 +315,7 @@ public class Home extends Application {
                 VBox friendsListBox = new VBox(10); // 设置条块之间的间距
 
                 // 添加好友条块
-                for (int i = 1; i <= Client.friendNumb; i++) { // 增加到XX10
+                for (int i = 1; i <= Client.friendNumb + 1; i++) { // 增加到XX10
                     // 创建用户名标签
                     Label friendLabel = new Label("XX0" + i);
                     friendLabel.setStyle("-fx-font-family: 'Arial'; -fx-font-size: 14px;");
@@ -334,12 +334,12 @@ public class Home extends Application {
                             "-fx-background-color: lightblue; -fx-background-radius: 10; " +
                             "-fx-border-radius: 10; -fx-border-color: lightblue; -fx-border-width: 1px;");
                     sendMessageBtn.setPadding(new Insets(5));
+
 // 设置申请联机按钮点击事件
                     applyConnectBtn.setOnAction(e -> {
                         System.out.println("申请联机: " + friendLabel.getText());
                         openChatWindow();
                     });
-
 // 设置发消息按钮点击事件
                     sendMessageBtn.setOnAction(e -> {
                         System.out.println("发送消息: " + friendLabel.getText());
@@ -452,7 +452,7 @@ public class Home extends Application {
 
                 // 图片按钮1：远程投屏
                 // 图片按钮1：远程投屏
-                ImageView leftImage = new ImageView(new Image(getClass().getResourceAsStream("touping.png")));
+                ImageView leftImage = new ImageView(new Image(getClass().getResourceAsStream("/touping.png")));
                 leftImage.setFitWidth(100);
                 leftImage.setFitHeight(100);
                 Button leftButton = new Button();
@@ -472,7 +472,7 @@ public class Home extends Application {
 
                 // 图片按钮2：远程控制
                 // 图片按钮2：远程控制
-                ImageView rightImage = new ImageView(new Image(getClass().getResourceAsStream("yuanchengkongzhi.png")));
+                ImageView rightImage = new ImageView(new Image(getClass().getResourceAsStream("/yuanchengkongzhi.png")));
                 rightImage.setFitWidth(100);
                 rightImage.setFitHeight(100);
                 Button rightButton = new Button();
@@ -496,7 +496,7 @@ public class Home extends Application {
                 buttonBox.getChildren().addAll(leftBox, rightBox);
 
                 // 三角图标按钮
-                ImageView arrowIcon = new ImageView(new Image(getClass().getResourceAsStream("dianji.png")));
+                ImageView arrowIcon = new ImageView(new Image(getClass().getResourceAsStream("/dianji.png")));
                 arrowIcon.setFitWidth(20);
                 arrowIcon.setFitHeight(20);
                 Button dropDownButton = new Button();

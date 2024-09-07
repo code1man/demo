@@ -12,29 +12,29 @@ import static org.example.demo.Main.loginController;
 
 // 视频聊天获取摄像头
 public class CameraUtil {
-    private Webcam webcam;
-    private TCPSendUtil tcpSendUtil;
-    private  TCPReceiveUtil tcpReceiveUtil;
+    private final Webcam webcam;
+    private final TCPSendUtil tcpSendUtil;
+    private final TCPReceiveUtil tcpReceiveUtil;
+
+    private final Thread RecieveVideoThread;
+    private final Thread SendVideoThread;
 
     public CameraUtil() {
         // get default webcam and open it获取网络摄像头设置并打开
         webcam = Webcam.getDefault();
         tcpReceiveUtil = new TCPReceiveUtil(Client.client);
         tcpSendUtil = new TCPSendUtil(Client.client);
-    }
 
-    public void openVideoModule() {
-        webcam.open();
-        new Thread(()->{
+        RecieveVideoThread = new Thread(()->{
             while(true) {
                 // get image获取图片
                 BufferedImage bufferedImage = webcam.getImage();
                 byte[] image = tcpSendUtil.getImageBytes(bufferedImage);
                 tcpSendUtil.sendImg(image);
             }
-        }).start();
+        });
 
-        new Thread(()->{
+        SendVideoThread = new Thread(()->{
             while(true) {
                 byte[] imageData = tcpReceiveUtil.receiveImg();
                 ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
@@ -45,6 +45,20 @@ public class CameraUtil {
                     throw new RuntimeException(e);
                 }
             }
-        }).start();
+        });
+    }
+
+    //打开摄像头
+    public void openVideoModule() {
+        webcam.open();
+        SendVideoThread.start();
+        RecieveVideoThread.start();
+    }
+
+    //关闭摄像头
+    public void closeVideoModule() {
+        webcam.close();
+        SendVideoThread.interrupt();
+        RecieveVideoThread.interrupt();
     }
 }

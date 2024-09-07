@@ -25,7 +25,7 @@ public class Server {
         System.out.println("-----Server-----");
 
         try (// 1、指定端口 使用SeverSocket创建服务器
-             ServerSocket server = new ServerSocket(8888);
+             ServerSocket server = new ServerSocket(10086);
              ServerSocket serverSocket = new ServerSocket(7777);) {
             // 2、阻塞式等待连接 accept
             while (true) {

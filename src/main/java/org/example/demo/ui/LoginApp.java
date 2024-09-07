@@ -18,9 +18,9 @@ public class LoginApp extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("用户登录");
-        primaryStage.getIcons().add(new Image("logo.jpg"));
+        primaryStage.getIcons().add(new Image("/logo.jpg"));
         // 设置背景图片
-        Image backgroundImage = new Image("back03.jpg"); // 使用上传的图片路径
+        Image backgroundImage = new Image("/back03.jpg"); // 使用上传的图片路径
         BackgroundImage background = new BackgroundImage(
                 backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
                 new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, false, true)
@@ -37,12 +37,12 @@ public class LoginApp extends Application {
         vbox.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.5, 0, 0);");
 
         // logo图片
-        ImageView logo = new ImageView("logo.jpg");  // 替换为你logo图片的路径
+        ImageView logo = new ImageView("/logo.jpg");  // 替换为你logo图片的路径
         logo.setFitWidth(100);
         logo.setFitHeight(80);
 
         // slogan图片
-        ImageView slogen = new ImageView("slogen.png");  // 替换为你slogan图片的路径
+        ImageView slogen = new ImageView("/slogen.png");  // 替换为你slogan图片的路径
         slogen.setFitWidth(120);
         slogen.setFitHeight(15);
 
