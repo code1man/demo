@@ -83,7 +83,10 @@ public class Client {
                         case "mouseMoved":
                             int x = Integer.parseInt(order[1]);
                             int y = Integer.parseInt(order[2]);
-                            // robot.mouseMove(x, y);
+                            int windowSizeWidth = Integer.parseInt(order[3]);
+                            int windowSizeHeight = Integer.parseInt(order[4]);
+                            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                            robot.mouseMove(x * screenSize.width / windowSizeWidth, y * screenSize.height / windowSizeHeight);
                             System.out.println("x: " + x + ", y: " + y);
                             break;
 
