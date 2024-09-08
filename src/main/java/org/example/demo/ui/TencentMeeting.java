@@ -14,6 +14,7 @@ import org.example.demo.Main;
 
 public class TencentMeeting {
 
+    public Button FullScreen;
     @FXML
     private Button chat;
 
@@ -45,22 +46,22 @@ public class TencentMeeting {
 
     @FXML
     private Button quit;
-    @FXML
-    private Button Max;
+
     private boolean isFullScreen = false;
     Image micro=new Image("/microPhone.png");
     Image video1=new Image("/video.png");
     Image screen1=new Image("/share.jpg");
     Image chat1=new Image("/chat.png");
     Image exit=new Image("/exit.jpg");
-    Image max=new Image("/");
+    Image max=new Image("/max.jpg");
     public void initialize()
-    {   this.setPrimaryStage(primaryStage);
-       ImageView imageView1=new ImageView(exit);
-       quit.setGraphic(imageView1);
+    {
+        this.setPrimaryStage(primaryStage);
 
         ImageView imageView3=new ImageView(max);
-        Max.setGraphic(imageView3);
+        FullScreen.setGraphic(imageView3);
+        ImageView imageView1=new ImageView(exit);
+        quit.setGraphic(imageView1);
 
         microPic=new ImageView(micro);
         microPhone.setGraphic(microPic);
@@ -86,8 +87,8 @@ public class TencentMeeting {
     public void setPrimaryStage(Stage stage) {
 
         this.primaryStage =Main.stage;
-        Max=new Button();
-        Max.setOnAction(event -> toggleFullScreen(primaryStage));
+
+        FullScreen.setOnAction(event -> toggleFullScreen(primaryStage));
     }
 
     private void toggleFullScreen(Stage stage) {
@@ -113,7 +114,8 @@ public class TencentMeeting {
     @FXML
     void trans2(ActionEvent event) {
         if(isPic3)
-        { ImageView imageView1=new ImageView("/video1.png");
+        {
+            ImageView imageView1=new ImageView("/video1.png");
             imageView1.setFitHeight(50);
             imageView1.setFitWidth(50);
             video.setGraphic(imageView1);

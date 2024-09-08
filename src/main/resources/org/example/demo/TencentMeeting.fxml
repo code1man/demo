@@ -27,7 +27,7 @@
                 <Button fx:id="chat" mnemonicParsing="false" onAction="#trans4"  HBox.hgrow="ALWAYS"/>
             </children>
         </HBox>
-        <Button fx:id="Max" mnemonicParsing="false" onAction="#toggleFullScreen"  AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0"/>
+        <Button fx:id="FullScreen" mnemonicParsing="false" onAction="#toggleFullScreen"  AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0"/>
         <Button fx:id="quit" mnemonicParsing="false" onAction="#close" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="100"/>
 
     </children>
