@@ -2,16 +2,15 @@ package org.example.demo.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -168,8 +167,8 @@ public class Home extends Application {
         // 使用 AnchorPane 放置右侧内容块
         rightPane = new AnchorPane();
         rightPane.getChildren().add(rightContentBox);
-        AnchorPane.setRightAnchor(rightContentBox, 10.0); // 右侧距离
-        AnchorPane.setTopAnchor(rightContentBox, 30.0);   // 顶部距离
+        AnchorPane.setRightAnchor(rightContentBox, Double.valueOf(10.0)); // 右侧距离
+        AnchorPane.setTopAnchor(rightContentBox, Double.valueOf(30.0));   // 顶部距离
 
         root.setCenter(rightPane); // 将右侧内容区域设置到 BorderPane 的中心位置
 
@@ -211,13 +210,21 @@ public class Home extends Application {
                 recommendationList.setPrefWidth(searchField.getWidth());
                 recommendationPopup.show(window, window.getX() + searchField.localToScene(0, 0).getX() + searchField.getScene().getX(),
                         window.getY() + searchField.localToScene(0, 0).getY() + searchField.getHeight() + searchField.getScene().getY());
-            }
+            } else
+                recommendationPopup.hide();
         });
 
         // 关闭推荐框的逻辑
         root.setOnMouseClicked(e -> {
-            if (!searchField.isFocused() && recommendationPopup.isShowing()) {
-                recommendationPopup.hide();
+            if (recommendationPopup.isShowing()) {
+                Bounds popupBounds = recommendationPopup.getContent().get(0).localToScreen(
+                        recommendationPopup.getContent().get(0).getBoundsInLocal()
+                );
+                Point2D clickPoint = new Point2D(e.getScreenX(), e.getScreenY());
+
+                if (!popupBounds.contains(clickPoint)) {
+                    recommendationPopup.hide();
+                }
             }
         });
 
