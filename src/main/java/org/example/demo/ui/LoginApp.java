@@ -17,6 +17,8 @@ public class LoginApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
+
         primaryStage.setTitle("用户登录");
         primaryStage.getIcons().add(new Image("/logo.jpg"));
         // 设置背景图片
@@ -159,7 +161,7 @@ public class LoginApp extends Application {
     }
 
     public static void main(String[] args) {
-        launch(args);
+        launch();
     }
 
     // 注释掉实际的数据库操作方法

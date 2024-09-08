@@ -17,10 +17,10 @@ public class yuanchengkongzhi extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.getIcons().add(new Image("logo.jpg"));
+        primaryStage.getIcons().add(new Image("/logo.jpg"));
         // 创建底部背景区域
         Pane bottomPane = new Pane();
-        Image backgroundImage = new Image(getClass().getResourceAsStream("back01.png")); // 替换为你的图片路径
+        Image backgroundImage = new Image(getClass().getResourceAsStream("/back01.png")); // 替换为你的图片路径
         BackgroundImage bgImage = new BackgroundImage(
                 backgroundImage,
                 BackgroundRepeat.NO_REPEAT,

@@ -2,19 +2,26 @@ package org.example.demo.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.example.demo.Client;
+import org.example.demo.Main;
 
 import java.io.File;
+import java.io.IOException;
+
 public class Home extends Application {
 
     private Label userAvatarLabel;
@@ -34,8 +41,10 @@ public class Home extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("客户端0.0.1");
-        primaryStage.getIcons().add(new Image("logo.jpg"));
+        Main.stage = primaryStage;
+
+        Main.stage.setTitle("客户端0.0.1");
+        Main.stage.getIcons().add(new Image("logo.jpg"));
         // 左侧菜单区域
         VBox leftMenu = new VBox(20); // 将间距设为 20
         leftMenu.setPadding(new Insets(15));
@@ -170,28 +179,90 @@ public class Home extends Application {
 
         searchField = new TextField();
         searchField.setPromptText("搜索...");
-
-        // 设置搜索框的样式
-        searchField.setStyle("-fx-background-color: #ffffff; " +      // 背景色
-                "-fx-border-color: #cccccc; " +         // 边框色
-                "-fx-border-width: 2px; " +            // 边框宽度
-                "-fx-border-radius: 10px; " +          // 边框弧度
-                "-fx-background-radius: 10px; " +      // 背景弧度
-                "-fx-padding: 5px; " +                 // 内边距
-                "-fx-font-size: 14px; " +              // 字体大小
-                "-fx-pref-width: 550px;");             // 预期宽度
+        searchField.setStyle("-fx-background-color: #ffffff; " +
+                "-fx-border-color: #cccccc; " +
+                "-fx-border-width: 2px; " +
+                "-fx-border-radius: 10px; " +
+                "-fx-background-radius: 10px; " +
+                "-fx-padding: 5px; " +
+                "-fx-font-size: 14px; " +
+                "-fx-pref-width: 550px;");
 
         HBox searchBox = new HBox(searchField);
         searchBox.setPadding(new Insets(10));
         searchBox.setAlignment(Pos.CENTER_RIGHT);
 
+        // 创建Popup来展示推荐用户
+        Popup recommendationPopup = new Popup();
+        ListView<HBox> recommendationList = new ListView<>();
+        recommendationList.setPrefWidth(searchField.getPrefWidth());
+
+        for (int i = 1; i <= 5; i++) {
+            HBox itemBox = createRecommendationItem("XX0" + i);
+            recommendationList.getItems().add(itemBox);
+        }
+
+        recommendationPopup.getContent().add(recommendationList);
+
+        // 搜索框点击事件
+        searchField.setOnMouseClicked(e -> {
+            if (!recommendationPopup.isShowing()) {
+                Window window = searchField.getScene().getWindow();
+                recommendationList.setPrefWidth(searchField.getWidth());
+                recommendationPopup.show(window, window.getX() + searchField.localToScene(0, 0).getX() + searchField.getScene().getX(),
+                        window.getY() + searchField.localToScene(0, 0).getY() + searchField.getHeight() + searchField.getScene().getY());
+            }
+        });
+
+        // 关闭推荐框的逻辑
+        root.setOnMouseClicked(e -> {
+            if (!searchField.isFocused() && recommendationPopup.isShowing()) {
+                recommendationPopup.hide();
+            }
+        });
+
+        // 确保搜索框保持焦点时，不会关闭推荐框
+        searchField.setOnKeyPressed(e -> {
+            if (!recommendationPopup.isShowing()) {
+                recommendationPopup.show(searchField, searchField.getLayoutX(), searchField.getLayoutY() + searchField.getHeight());
+            }
+        });
+
+        // 添加到主面板
         root.setTop(searchBox);
 
-        Scene scene = new Scene(root, 800, 600); // 设置整体界面大小为800x600
+        Scene scene = new Scene(root, 800, 600);
+        Main.scene = scene;
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+    private HBox createRecommendationItem(String userName) {
+        HBox itemBox = new HBox(10);
+        itemBox.setAlignment(Pos.CENTER_LEFT);
+        itemBox.setPadding(new Insets(10));
+        itemBox.setStyle("-fx-background-color: white; " +
+                "-fx-border-color: lightgray; " +
+                "-fx-border-radius: 5px; " +
+                "-fx-background-radius: 5px;");
 
+        Label userLabel = new Label(userName);
+        userLabel.setStyle("-fx-font-family: '微软雅黑'; -fx-font-size: 14px;");
+
+        Button addButton = new Button("加好友");
+        addButton.setStyle("-fx-background-color: lightblue; " +
+                "-fx-border-radius: 5px; " +
+                "-fx-background-radius: 5px;");
+
+        addButton.setOnAction(e -> {
+            System.out.println("添加好友: " + userName);
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        itemBox.getChildren().addAll(userLabel, spacer, addButton);
+        return itemBox;
+    }
     private void displayUserInfo() {
         // 显示用户基本信息
         VBox userInfoBox = new VBox(10);
@@ -261,7 +332,7 @@ public class Home extends Application {
 
     private void updateRightContent(String content) {
         // 清空现有内容
-        rightContentBox.getChildren().clear();
+        //rightContentBox.getChildren().clear();
 
         switch (content) {
 
@@ -297,6 +368,7 @@ public class Home extends Application {
 
             case "好友列表模块内容":
                 // 创建一个 VBox 用于包含搜索框
+                rightContentBox.getChildren().clear();
                 VBox searchBox = new VBox(10);
                 searchBox.setPadding(new Insets(10, 0, 0, 0)); // 设置上边距
 
@@ -387,59 +459,106 @@ public class Home extends Application {
 // Home.java 的相关修改部分
 
 // 在显示用户信息的case中
-            case "userInfo":
-                VBox userInfoBox = new VBox(10);
-                userInfoBox.setPadding(new Insets(10));
-                userInfoBox.setStyle("-fx-background-color: white; " +
-                        "-fx-border-radius: 15; " +
-                        "-fx-background-radius: 15; " +
-                        "-fx-border-color: lightgray; " +
-                        "-fx-border-width: 2px; " +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 2, 2);");
 
-                // 添加修改信息按钮
+
+
+
+
+
+
+
+            case "userInfo":
+                Popup popup = new Popup();
+
+                popup.setAutoHide(true); // 鼠标移开时自动隐藏
+
+                // 创建控件
+                Label usernameLabel = new Label("用户名: " + Client.name);
+                Label signatureLabel = new Label("个性签名: " + Client.signature);
+                Label genderLabel = new Label("性别: " + Client.sex);
+                Label birthdayLabel = new Label("生日: " + Client.birthday);
+                Label countryLabel = new Label("国家: " + Client.birthday);
+                Label provinceLabel = new Label("省份: " + Client.province);
+
+                Image profileImage = new Image(getClass().getResourceAsStream(Client.imagePath));
+                ImageView profileImageView = new ImageView(profileImage);
+                profileImageView.setFitWidth(100);
+                profileImageView.setFitHeight(100);
+                profileImageView.setPreserveRatio(true);
+
+                VBox vBox = new VBox(10);
+                vBox.setAlignment(Pos.CENTER_LEFT);
+
                 Button editInfoButton = new Button("修改信息");
 
-                // 头像区域
-                Label avatarLabel = new Label("点击上传头像");
-                ImageView avatarImageView = new ImageView();
-                avatarImageView.setFitWidth(100);
-                avatarImageView.setFitHeight(100);
-                avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px;");
+                vBox.getChildren().addAll(usernameLabel, signatureLabel, genderLabel, birthdayLabel, countryLabel, provinceLabel, editInfoButton);
+                HBox hBox = new HBox(10);
+                hBox.setAlignment(Pos.CENTER_LEFT);
+                hBox.getChildren().addAll(profileImageView, vBox);
 
-                // 用户信息展示
-                Label usernameLabel = new Label("用户名: XXX");
-                Label signatureLabel = new Label("个性签名: XXX");
-                Label genderLabel = new Label("性别: 男");
-                Label birthdayLabel = new Label("生日: 2000-01-12");
-                Label countryLabel = new Label("国家: 中国");
-                Label provinceLabel = new Label("省份: 北京市");
+                Pane pane = new Pane();
+                pane.getChildren().add(hBox);
 
-                // 监听修改信息按钮点击事件，打开 personalinfo 窗口
+                pane.setStyle("-fx-background-color: #ffffff; " +
+                        "-fx-border-color: #cccccc; " +
+                        "-fx-border-width: 2px; " +
+
+                        "-fx-border-radius: 10px; " +
+                        "-fx-background-radius: 10px; " +
+                        "-fx-padding: 5px; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-pref-width: 550px;");
+
+                popup.getContent().add(pane);
+
+                // Ensure that the stage is valid
+                Stage stage = (Stage) rightContentBox.getScene().getWindow();
+                if (stage != null) {
+                    popup.setX(130);
+                    popup.setY(300);
+                    popup.show(stage);
+                } else {
+                    System.out.println("Stage is null.");
+                }
+
+                // Edit info button action
                 editInfoButton.setOnAction(e -> {
-                    new personalinfo((username, signature, gender, birthday, country, province, avatar) -> {
-                        // 更新用户信息
+/*                    new personalinfo((username, signature, gender, birthday, country, province, avatar) -> {
                         usernameLabel.setText("用户名: " + username);
                         signatureLabel.setText("个性签名: " + signature);
                         genderLabel.setText("性别: " + gender);
                         birthdayLabel.setText("生日: " + birthday);
                         countryLabel.setText("国家: " + country);
                         provinceLabel.setText("省份: " + province);
-                        /*avatarImageView.setImage*///(avatar);
-                    }).start(new Stage());
+                        // If avatar is an Image, you could update it here
+                        // profileImageView.setImage(avatar);
+                    }).start(new Stage());*/
+                    new personalinfo().start(new Stage());
                 });
 
-                // 将头像和用户信息添加到用户信息框
-                userInfoBox.getChildren().addAll(avatarImageView, usernameLabel, signatureLabel, genderLabel, birthdayLabel, countryLabel, provinceLabel, editInfoButton);
+            if (rightContentBox != null) {
+                //rightContentBox.getChildren().clear();  // 清除之前的内容
+                //rightContentBox.getChildren().add(vBox);  // 添加用户信息框
+            }
+            break;
 
-                if (rightContentBox != null) {
-                    rightContentBox.getChildren().clear();  // 清除之前的内容
-                    rightContentBox.getChildren().add(userInfoBox);  // 添加用户信息框
-                }
-                break;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             case "远程投屏模块内容":
                 // 创建一个弧形边框白色背景的块
+                rightContentBox.getChildren().clear();
                 VBox remoteCastingBox = new VBox(20);
                 remoteCastingBox.setPadding(new Insets(20));
                 remoteCastingBox.setAlignment(Pos.CENTER);
@@ -520,10 +639,10 @@ public class Home extends Application {
                 String[] targets = {"XX01", "XX02", "XX03", "XX04", "XX05"};
                 for (String target : targets) {
                     CheckBox checkBox = new CheckBox(target);
-                    HBox hBox = new HBox(10);
-                    hBox.setAlignment(Pos.CENTER_LEFT);
-                    hBox.getChildren().add(checkBox);
-                    targetListView.getItems().add(hBox);
+                    HBox hBox1 = new HBox(10);
+                    hBox1.setAlignment(Pos.CENTER_LEFT);
+                    hBox1.getChildren().add(checkBox);
+                    targetListView.getItems().add(hBox1);
                 }
 
                 // 下拉按钮事件：显示/隐藏选项列表
@@ -559,16 +678,27 @@ public class Home extends Application {
 
     // 新窗口方法：用于显示屏幕投屏的窗口
     private void openScreenCastingWindow() {
-        Platform.runLater(() -> {
-            try {
-                // 创建 touping 窗口的实例并启动
-                touping toupingWindow = new touping();
-                Stage toupingStage = new Stage();
-                toupingWindow.start(toupingStage); // 启动 touping 窗口
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
+
+        try {
+            Main.setRoot("TencentMeeting");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+//        FXMLLoader loader = new FXMLLoader(getClass().getResource("TencentMeeting.fxml"));
+//
+//        // Load the root element from FXML
+//        Parent root = null;
+//        try {
+//            root = loader.load();
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        // Create the scene
+//        Scene scene = new Scene(root);
+//        Main.stage.setScene(scene);
+
     }
 
     // 新窗口方法：用于显示设备控制的窗口

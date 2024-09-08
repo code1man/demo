@@ -10,16 +10,17 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.example.demo.Client;
 
 import java.io.File;
 
 public class personalinfo extends Application {
 
-    private UserInfoListener userInfoListener;
+   // private UserInfoListener userInfoListener;
 
     // 自定义构造函数，传递回调接口
-    public personalinfo(UserInfoListener userInfoListener) {
-        this.userInfoListener = userInfoListener;
+    public personalinfo() {
+
     }
 
     @Override
@@ -52,10 +53,11 @@ public class personalinfo extends Application {
             if (selectedFile != null) {
                 // 如果用户选择了文件，则将其转换为Image
                 Image avatarImage = new Image(selectedFile.toURI().toString());
-
+                Client.imagePath = selectedFile.getPath();
                 // 将Image设置给ImageView
                 avatarImageView.setImage(avatarImage);
             }
+
         });
 
         // 输入框与选择框的通用样式
@@ -123,18 +125,17 @@ public class personalinfo extends Application {
         submitButton.setStyle("-fx-background-color: #4169E1; -fx-border-radius: 15; -fx-background-radius: 15; -fx-text-fill: white;");
         submitButton.setOnAction(e -> {
             // 获取用户输入的数据
-            String username = usernameField.getText();
-            String signature = signatureField.getText();
-            String gender = genderComboBox.getValue();
-            String birthday = birthdayField.getText();
-            String country = countryComboBox.getValue();
-            String province = provinceComboBox.getValue();
-            Image avatar = avatarImageView.getImage();
+            Client.name = usernameField.getText();
+            Client.signature = signatureField.getText();
+            Client.sex = genderComboBox.getValue();
+            Client.birthday = birthdayField.getText();
+            Client.country = countryComboBox.getValue();
+            Client.province = provinceComboBox.getValue();
 
-            // 通过回调函数将数据传回主界面
+/*            // 通过回调函数将数据传回主界面
             if (userInfoListener != null) {
                 userInfoListener.onUserInfoUpdated(username, signature, gender, birthday, country, province, avatar);
-            }
+            }*/
 
             // 关闭修改窗口
             primaryStage.close();

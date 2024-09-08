@@ -19,7 +19,13 @@ public class Client {
     public static String uid = null;
     public static int friendNumb = 0;
     public static ArrayList<String>friendNames = null;
-
+    public static String sex = "无";
+    public static String country = "中国";
+    public static String province = "北京";
+    public static String birthday = "2000-01-01";
+    public static int age = 24;
+    public static String signature = "摆烂";
+    public static String imagePath = "/touxiang.png";
     public static Socket client = null;
     public static Socket secondClient = null;
     public static Socket friendClient = null;
