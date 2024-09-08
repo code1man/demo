@@ -54,16 +54,51 @@ public class Home extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        //先连接
+        try {
+            Client.client = new Socket("127.0.0.1",7777);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+
 
         Button applyButton = new Button("申请");
         Button acceptButton =  new Button("接受");
         Button refuseButton =  new Button("拒绝");
 
-
-
         acceptButton.setOnAction(ev->{
+            String friendName = "";//这里后面要改从消息列表上取
+            String request = "addFriends"+" "+"accepted"+" "+Client.uid+" "+DbUtil.getID(friendName);
 
-            //String request = "addFriends"+" "+Client.uid+" "+
+            sendUtil.sendUTF(request);
+
+            System.out.println(receiveUtil.receiveUTF());
+
+        });
+
+        applyButton.setOnAction(ev->{
+            String friendName = "";     //这里后面要改，从检索出来的标签取
+
+            String request = "addFriends"+" "+"pending"+" "+Client.uid+" "+DbUtil.getID(friendName);
+
+            sendUtil.sendUTF(request);
+
+            System.out.println(receiveUtil.receiveUTF());
+
+        });
+
+        refuseButton.setOnAction(ev->{
+            String friendName = "";     //这里后面要改，从检索出来的消息列表取
+
+            String request = "addFriends"+" "+"blocked"+" "+Client.uid+" "+DbUtil.getID(friendName);
+
+            sendUtil.sendUTF(request);
+
+            System.out.println(receiveUtil.receiveUTF());
+
         });
 
 
@@ -308,6 +343,16 @@ public class Home extends Application {
         // 清空现有内容
         rightContentBox.getChildren().clear();
 
+        //先连接
+        try {
+            Client.client = new Socket("127.0.0.1",7777);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+
         switch (content) {
 
             case "默认页面":
@@ -361,6 +406,8 @@ public class Home extends Application {
                 VBox friendsListBox = new VBox(10); // 设置条块之间的间距
                 searchBox.getChildren().add(friendsListBox); // 将好友列表添加到searchBox中
 
+
+
                 // 查询并刷新好友列表的方法
                 Runnable refreshFriendsList = () -> {
                     String search = searchField.getText(); // 获取搜索框中的内容
@@ -370,11 +417,7 @@ public class Home extends Application {
                             "INNER JOIN t_friends f ON u.userID = f.friendID " +
                             "WHERE f.userID = ? AND f.status = 'accepted'";
 
-                    String getFriendsSql1 = "SELECT u.username " +
-                            "FROM t_users u " +
-                            "INNER JOIN t_friends f ON u.userID = f.friendID " +
-                            "WHERE f.userID = ? AND f.status = 'accepted' " +
-                            "AND u.username LIKE ?";
+
 
                     ArrayList<Object> arrayList = new ArrayList<>();
                     arrayList.add(Client.uid);
@@ -382,10 +425,16 @@ public class Home extends Application {
 
                     // 如果有搜索内容，则使用带搜索条件的 SQL，否则使用默认 SQL
                     if (!search.equals("") && search != null) {
-                        arrayList.add("%" + search + "%");
-                        friendResultSet = DbUtil.executeQuery(getFriendsSql1, arrayList);
+                        String request = "SEARCHFRIENDS1"+" "+Client.uid+" "+"%"+search+"%";
+                        sendUtil.sendUTF(request);
+
+//                        arrayList.add("%" + search + "%");
+//                        friendResultSet = DbUtil.executeQuery(getFriendsSql1, arrayList);
                     } else {
-                        friendResultSet = DbUtil.executeQuery(getFriendsSql, arrayList);
+                        String request = "SEARCHFRIENDS2"+" "+Client.uid;
+                        sendUtil.sendUTF(request);
+                       // friendResultSet = DbUtil.executeQuery(getFriendsSql, arrayList);
+
                     }
 
                     // 清空原有的好友列表
@@ -394,7 +443,7 @@ public class Home extends Application {
                     // 添加好友条块
                     while (true) {
                         try {
-                            if (!friendResultSet.next()) break;
+                            if (!Client.friendResultSet.next()) break;
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
                         }
@@ -402,7 +451,7 @@ public class Home extends Application {
                         // 创建用户名标签
                         Label friendLabel = null;
                         try {
-                            friendLabel = new Label(friendResultSet.getString("username"));
+                            friendLabel = new Label(Client.friendResultSet.getString("username"));
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
                         }
@@ -529,14 +578,14 @@ public class Home extends Application {
                         //本地以及数据库中的数据也需要更新
 
                         //由于外部还没有完成连接代码
-                        try {
-                            Client.client = new Socket("127.0.0.1",7777);
-                        } catch (IOException ex) {
-                            throw new RuntimeException(ex);
-                        }
-
-                        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-                        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+//                        try {
+//                            Client.client = new Socket("127.0.0.1",7777);
+//                        } catch (IOException ex) {
+//                            throw new RuntimeException(ex);
+//                        }
+//
+//                        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+//                        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
                         Client.name = username;
                         String request = "UPDATE"+" "+username+" "+Client.uid;
@@ -635,8 +684,10 @@ public class Home extends Application {
                 targetListView.setPrefWidth(200);
                 targetListView.setVisible(false); // 初始设置为隐藏
 
-                String[] targets = {"XX01", "XX02", "XX03", "XX04", "XX05"};
-                for (String target : targets) {
+
+                //12
+                //String[] targets = {"XX01", "XX02", "XX03", "XX04", "XX05"};
+                for (String target : Client.friendNames) {
                     CheckBox checkBox = new CheckBox(target);
                     HBox hBox = new HBox(10);
                     hBox.setAlignment(Pos.CENTER_LEFT);

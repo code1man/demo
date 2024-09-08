@@ -177,6 +177,7 @@ public class LoginApp extends Application {
                 arrayList.add(username);
                 ResultSet resultSet = DbUtil.executeQuery(sql,arrayList);
 
+                DbUtil.findAllFriends(DbUtil.getID(username));
 
                 Client.name = username;
 

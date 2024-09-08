@@ -114,14 +114,28 @@ public class Server {
                             handleMessage(Integer.parseInt(request[1]),Integer.parseInt(request[2]),request[3],send2);
                         }
 
+
+                        //修改用户名
                         if(request[0].equals("UPDATE"))
                         {
                             handUpdateUserName(request[1],Integer.parseInt(request[2]),send2);
                         }
 
+                        //更新头像
                         if(request[0].equals("UPDATEHEAD"))
                         {
                             handUpdateHead(Integer.parseInt(request[1]),request[2],send2);
+                        }
+
+                        //添加好友
+                        if (request[0].equals("ADDFRIENDs"))
+                        {
+                            handleAddFriends(request[1],Integer.parseInt(request[2]),Integer.parseInt(request[3]),send2);
+                        }
+
+                        if (request[0].equals("SEARCHFRIENDS"))
+                        {
+
                         }
                     }
 
@@ -331,6 +345,80 @@ public class Server {
 
         }
 
+        private void handleAddFriends(String status,int userid,int friendid  , TCPSendUtil sendUtil)
+        {
+            ArrayList<Object>arrayList = new ArrayList<>();
+            arrayList.add(userid);
+            arrayList.add(friendid);
+            arrayList.add(Timestamp.valueOf(LocalDateTime.now()));
+
+            ArrayList<Object> arrayList1 = new ArrayList<>();
+            arrayList1.add(friendid);
+            arrayList1.add(userid);
+            arrayList1.add(status);
+            arrayList1.add(arrayList.get(2));
+
+            ArrayList<Object> arrayList2 = new ArrayList<>();
+            arrayList2.add(status);
+            arrayList2.add(userid);
+
+            //申请
+            if (status.equals("pending"))
+            {
+                String sql = "INSERT INTO t_friends  (userid,friendid,requestdata) VALUES (?,?,?)";
+
+                int count = DbUtil.executeUpdate(sql,arrayList);
+                System.out.println(count+"条记录   "+userid +"正在申请好友");
+                sendUtil.sendUTF("已申请");
+            }
+            //接受
+            else if(status.equals("accepted"))
+            {
+                //先修改申请时的状态
+                String sql1 = "UPDATE t_friends SET status = ? WHERE userid = ?";
+                int count = DbUtil.executeUpdate(sql1,arrayList2);
+                System.out.println(count+"条记录   "+friendid +"同意了好友申请");
+                sendUtil.sendUTF("已同意");
+
+                //我们还要再插入一条
+                String sql = "INSERT INTO t_friends  (userid,friendid,status) VALUES (?,?,?)";
+                int count1 = DbUtil.executeUpdate(sql,arrayList1);
+                System.out.println(count+"条记录   "+friendid +"  和 "+userid+"相互成为了好友");
+                sendUtil.sendUTF("已相互成为好友");
+
+                org.example.demo.Client.friendNames.add(DbUtil.getUserName(friendid));
+                //另外一端也需要改     ，首先要接收到对方接受的信息
+
+            }
+            //拒绝
+            else
+            {
+                //只用修改申请时的状态
+                String sql = "UPDATE t_friends SET status = ? WHERE userid = ?";
+                int count = DbUtil.executeUpdate(sql,arrayList2);
+                System.out.println(count+"条记录   "+friendid +"拒绝了好友申请");
+                sendUtil.sendUTF("已拒绝");
+            }
+
+        }
+
+        private void searchFriends1(int userid, String like ,TCPSendUtil sendUtil){
+            String getFriendsSql1 = "SELECT u.username " +
+                    "FROM t_users u " +
+                    "INNER JOIN t_friends f ON u.userID = f.friendID " +
+                    "WHERE f.userID = ? AND f.status = 'accepted' " +
+                    "AND u.username LIKE ?";
+
+            ArrayList<Object> arrayList  = new ArrayList<>();
+            arrayList.add(userid);
+            arrayList.add(like);
+
+            org.example.demo.Client.friendResultSet = DbUtil.executeQuery(getFriendsSql1,arrayList);
+        }
+
+        private void searchFriends2(int userid,TCPSendUtil sendUtil){
+
+        }
 
     }
 }

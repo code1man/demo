@@ -13,6 +13,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,9 @@ public class Client {
     public static double goodRatingPercentage = 0.0;//好评率
 
     public static int friendNumb = 0;
-    public static ArrayList<String>friendNames = null;
+
+    public static ResultSet friendResultSet;
+    public static ArrayList<String>friendNames = new ArrayList<>();
 
     public static Socket client = null;
     public static Socket secondClient = null;
