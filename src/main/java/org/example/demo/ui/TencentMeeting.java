@@ -1,3 +1,4 @@
+// 远程投屏
 package org.example.demo.ui;
 
 import javafx.application.Application;
@@ -135,11 +136,6 @@ public class TencentMeeting {
     }
 
     public void close(ActionEvent actionEvent) {
-         this.primaryStage.close();
-         Home home=new Home();
-
+         new Home().start(Main.stage);
     }
-
-
-
 }
