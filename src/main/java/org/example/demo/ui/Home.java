@@ -35,7 +35,7 @@ public class Home extends Application {
 
 
     public static void main(String[] args) {
-        launch(args);
+        launch();
     }
 
     @Override
@@ -548,20 +548,6 @@ public class Home extends Application {
                 //rightContentBox.getChildren().add(vBox);  // 添加用户信息框
             }
             break;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
             case "远程投屏模块内容":
                 // 创建一个弧形边框白色背景的块

@@ -170,10 +170,7 @@ public class OpenFlash implements Initializable {
     }
 
     private void loadMainApp() {
-
-           new LoginApp().start(Main.stage);
-
-
+        new LoginApp().start(Main.stage);
     }
 }
 
