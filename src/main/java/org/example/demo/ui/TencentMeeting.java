@@ -1,5 +1,6 @@
 package org.example.demo.ui;
 
+import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -54,7 +55,7 @@ public class TencentMeeting {
     Image chat1=new Image("/chat.png");
 
     public void initialize()
-    {   this.setPrimaryStage(Main.stage);
+    {   this.setPrimaryStage(primaryStage);
         microPic=new ImageView(micro);
         microPhone.setGraphic(microPic);
         videoPic=new ImageView(video1);
@@ -63,13 +64,22 @@ public class TencentMeeting {
         screen.setGraphic(screenPIc);
         chatPic=new ImageView(chat1);
         chat.setGraphic(chatPic);
+        microPic.setFitHeight(50);
+        microPic.setFitWidth(50);
+        chatPic.setFitHeight(50);
+        chatPic.setFitWidth(50);
+        screenPIc.setFitHeight(50);
+        screenPIc.setFitWidth(50);
+        videoPic.setFitHeight(50);
+        videoPic.setFitWidth(50);
     }
 
    public static boolean isPic1=true;
    public static boolean isPic3=true;
 
     public void setPrimaryStage(Stage stage) {
-        this.primaryStage = stage;
+
+        this.primaryStage =Main.stage;
         Max=new Button();
         Max.setOnAction(event -> toggleFullScreen(primaryStage));
     }
@@ -84,8 +94,10 @@ public class TencentMeeting {
     void trans1(ActionEvent event) {
 
         if(isPic1)
-        {
-            microPhone.setGraphic(new ImageView("/microPhone1.png"));
+        {   ImageView imageView=new ImageView("/microPhone1.png");
+            imageView.setFitWidth(50);
+            imageView.setFitHeight(50);
+            microPhone.setGraphic(imageView);
         }else{
             microPhone.setGraphic(microPic);
         }
@@ -95,8 +107,10 @@ public class TencentMeeting {
     @FXML
     void trans2(ActionEvent event) {
         if(isPic3)
-        {
-            video.setGraphic(new ImageView("/video1.png"));
+        { ImageView imageView1=new ImageView("/video1.png");
+            imageView1.setFitHeight(50);
+            imageView1.setFitWidth(50);
+            video.setGraphic(imageView1);
         }else{
             video.setGraphic(videoPic);
         }
@@ -121,7 +135,11 @@ public class TencentMeeting {
     }
 
     public void close(ActionEvent actionEvent) {
-
+         this.primaryStage.close();
+         Home home=new Home();
 
     }
+
+
+
 }
