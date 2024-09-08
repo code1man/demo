@@ -26,8 +26,6 @@ public class TencentMeeting {
     @FXML
     private ImageView microPic;
 
-
-
     @FXML
     private Button screen;
 
@@ -54,9 +52,16 @@ public class TencentMeeting {
     Image video1=new Image("/video.png");
     Image screen1=new Image("/share.jpg");
     Image chat1=new Image("/chat.png");
-
+    Image exit=new Image("/exit.jpg");
+    Image max=new Image("/");
     public void initialize()
     {   this.setPrimaryStage(primaryStage);
+       ImageView imageView1=new ImageView(exit);
+       quit.setGraphic(imageView1);
+
+        ImageView imageView3=new ImageView(max);
+        Max.setGraphic(imageView3);
+
         microPic=new ImageView(micro);
         microPhone.setGraphic(microPic);
         videoPic=new ImageView(video1);
