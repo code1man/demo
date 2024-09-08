@@ -25,7 +25,7 @@ public class Server {
         System.out.println("-----Server-----");
 
         try (// 1、指定端口 使用SeverSocket创建服务器
-             ServerSocket server = new ServerSocket(10086);
+             ServerSocket server = new ServerSocket(8888);
              ServerSocket serverSocket = new ServerSocket(7777);) {
             // 2、阻塞式等待连接 accept
             while (true) {
@@ -43,7 +43,7 @@ public class Server {
         private final Socket client;
         private final Socket secondClient;
 
-        private String name;
+        private int uid;
 
         private boolean isRunning = false;
         private final TCPSendUtil send;
@@ -95,9 +95,9 @@ public class Server {
             all.remove(this);
         }
 
-        public Socket getTargetClient(String target) {
+        public Socket getTargetClient(int targetUid) {
             for (Client c : all) {
-                if (c.name.equals(target))
+                if (c.uid == targetUid)
                     return c.client;
             }
             return null;

@@ -22,10 +22,13 @@ public class Client {
 
     public static Socket client = null;
     public static Socket secondClient = null;
+    public static Socket friendClient = null;
 
     private Thread recieveImgThread;
     private Thread sendImgThread;
     private Thread robotThread;
+    private Thread friendResultThread;
+    private Thread friendThread;
 
 
     public void init() {
@@ -128,6 +131,27 @@ public class Client {
                 }
             } catch (AWTException e) {
                 throw new RuntimeException(e);
+            }
+        });
+
+        friendThread = new Thread(()->{
+
+        });
+
+        friendResultThread = new Thread(()->{
+            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.friendClient);
+            while (true) {
+                String friendReply = receiveUtil.receiveUTF();
+                if (friendReply != null && friendReply.contains(":")) {
+                    String[] reply = friendReply.split(":");
+                    if (reply[1].equals("同意")) {
+                        Client.friendNumb++;
+                        Client.friendNames.add(reply[0]);
+                        // 弹出好友同意的窗口
+                    } else if (reply[1].equals("拒绝")) {
+                        // 弹出好友不同意的窗口
+                    }
+                }
             }
         });
     }

@@ -33,6 +33,17 @@ public class TCPSendUtil {
         }
     }
 
+    public void sendInt(int msg)
+    {
+        try {
+            dos.writeInt(msg);
+            dos.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("发送好友申请失败");
+        }
+    }
+
     // 发送 对象
     public void sendObject(Object obj)
     {
