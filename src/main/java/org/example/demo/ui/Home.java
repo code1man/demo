@@ -643,8 +643,38 @@ public class Home extends Application {
                 // 将整个块添加到rightContentBox中
                 rightContentBox.getChildren().add(remoteCastingBox);
                 break;
+            case "本地设备模块内容":
 
+                rightContentBox.getChildren().clear();
+                VBox vBox1=new VBox();
+                Label label=new Label("设备名称");
+                Label label1=new Label("设备系统");
+                Label label2=new Label("设备地址");
+                label.setAlignment(Pos.CENTER);
+                HBox hBox1=new HBox();
+                hBox1.getChildren().add(label);
+                hBox1.getChildren().add(label1);
+                hBox1.getChildren().add(label2);
+                hBox1.setSpacing(155); // 设置子控件之间的间距为20像素
 
+                // 设置HBox的内边距
+                hBox1.setPadding(new Insets(10, 30, 10, 30)); // 上、右、下、左的内边距
+
+                HBox hBox2=new HBox();
+                Label label3=new Label("LAPTOP-6MTHAU55");
+                Label label4=new Label();
+                Image image=new Image("/windows.png");
+                ImageView imageView=new ImageView(image);
+                label4.setGraphic(imageView);
+                Label label5=new Label("120.227.56.141");
+                hBox2.getChildren().addAll(label3,label4,label5);
+                hBox2.setSpacing(120); // 设置子控件之间的间距为20像素
+
+                // 设置HBox的内边距
+                hBox2.setPadding(new Insets(10, 10, 10, 10)); // 上、右、下、左的内边距
+                vBox1.getChildren().addAll(hBox1,hBox2);
+                rightContentBox.getChildren().add(vBox1);
+                break;
         }
     }
     // 打开 Chat 窗口的方法
