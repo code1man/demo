@@ -4,7 +4,6 @@ package org.example.demo;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
-
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
@@ -12,16 +11,12 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 
 import static org.example.demo.ui.Home.controlWindow;
 
@@ -46,6 +41,7 @@ public class Client {
     public static String signature = "摆烂";
 
     public static Socket client = null;
+    public static Socket secondClient = null;
     public static Socket RemoteControlClient = null;
     public static Socket friendClient = null;
     public static Socket CameraClient = null;

@@ -144,11 +144,12 @@ public class LoginApp extends Application {
         //由于外部还没有完成连接代码
         try {
             Client.client = new Socket("127.0.0.1",7777);
+            Client.secondClient = new Socket("127.0.0.1",5555);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
 
-        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client);
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
         // 登录按钮点击事件

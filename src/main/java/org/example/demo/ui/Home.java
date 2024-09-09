@@ -28,7 +28,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.Socket;
 
 
 public class Home extends Application {
@@ -43,7 +42,8 @@ public class Home extends Application {
     private VBox rightContentBox; // 右侧内容块
     private TextField searchField; // 搜索框
 
-    private Thread receiveApplyThread;
+    private TCPSendUtil sendUtil = new TCPSendUtil(Client.client);
+    private TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
     public static ImageView userAvatar;
     public static yuanchengkongzhi controlWindow; //远程控制方便更改ImageView
@@ -56,20 +56,10 @@ public class Home extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        //先连接
-        try {
-            Client.client = new Socket("127.0.0.1",7777);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
         new Thread(()->{
             String request2 = "SHOWPENDINGFRIENDS " +Client.uid;
             sendUtil.sendUTF(request2);
-            System.out.println(request2);
 
             String s = receiveUtil.receiveUTF();
             if (!s.isEmpty()) {
@@ -108,6 +98,16 @@ public class Home extends Application {
             }
         }
         ).start();
+
+        Thread receiveApplyThread = new Thread(() -> {
+            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.secondClient);
+            while (!Thread.currentThread().isInterrupted()) {
+                String message = receiveUtil.receiveUTF();
+                if (message != null) {
+                    processMessage(message);
+                }
+            }
+        });
 
         Main.stage = primaryStage;
         primaryStage.setTitle("客户端0.0.1");
@@ -372,27 +372,17 @@ public class Home extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        receiveApplyThread = new Thread( ()-> {
-            TCPReceiveUtil tcpReceiveUtil = new TCPReceiveUtil(Client.client);
-            while (true) {
-                String message = tcpReceiveUtil.receiveUTF();
-                System.out.println(message);
-                if (message != null) {
-                    processMessage(message);
-                }
-            }
-        });
         receiveApplyThread.start();
-//
     }
 
     private void processMessage(String message) {
         Platform.runLater(() -> {
+            System.out.println(message);
             try {
                 String[] info = message.split("#");
                 if (info.length > 0) {
-                    if (info[0].equals("padding")) {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("popup.fxml"));
+                    if (info[0].equals("pending")) {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/demo/shenqing.fxml"));
                         Pane root;
                         try {
                             root = loader.load();
@@ -416,7 +406,7 @@ public class Home extends Application {
                         controller.setPopup(popup); // Pass the popup to the controller
                         controller.updateLabels(info[1], "/touxiang.png"); // Example data
 
-                        popup.show(root, popupX, popupY);
+                        popup.show(Main.stage, popupX, popupY);
                     } else if (info[0].equals("ACCEPT")) {
                         // Handle "ACCEPT" case
                         Client.friendNames.add(info[1]);
@@ -433,14 +423,6 @@ public class Home extends Application {
     private HBox createRecommendationItem(String userName) {
         //----------------------------------------------------------------------------
         //先连接
-        try {
-            Client.client = new Socket("127.0.0.1",7777);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
         //---------------------------------------------------------------------------[
 
         HBox itemBox = new HBox(10);
@@ -467,7 +449,7 @@ public class Home extends Application {
 
             sendUtil.sendUTF(request);
 
-            System.out.println(receiveUtil.receiveUTF());
+            // System.out.println(receiveUtil.receiveUTF());
         });
 
         Region spacer = new Region();
@@ -547,16 +529,6 @@ public class Home extends Application {
     private void updateRightContent(String content) {
         // 清空现有内容
         rightContentBox.getChildren().clear();
-
-        //先连接
-        try {
-            Client.client = new Socket("127.0.0.1",7777);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
 
         switch (content) {
@@ -798,18 +770,10 @@ public class Home extends Application {
                         //本地以及数据库中的数据也需要更新
 
                         //由于外部还没有完成连接代码
-//                        try {
-//                            Client.client = new Socket("127.0.0.1",7777);
-//                        } catch (IOException ex) {
-//                            throw new RuntimeException(ex);
-//                        }
-//
-//                        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-//                        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
                         String request = "UPDATE"+" "+Client.name+" "+Client.uid;
                         sendUtil.sendUTF(request);
-                        System.out.println(receiveUtil.receiveUTF());
+                        // System.out.println(receiveUtil.receiveUTF());
 
                         try {
                             new personalinfo().start(new Stage());

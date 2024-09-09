@@ -25,11 +25,13 @@ public class Server {
         System.out.println("-----Server-----");
 
         try (// 1、指定端口 使用SeverSocket创建服务器
-             ServerSocket serverSocket = new ServerSocket(7777)) {
+             ServerSocket serverSocket = new ServerSocket(7777);
+             ServerSocket serverSocket1 = new ServerSocket(5555);) {
             // 2、阻塞式等待连接 accept
             while (true) {
                 Socket socket = serverSocket.accept();
-                Client c = new Client(socket);
+                Socket socket1 = serverSocket1.accept();
+                Client c = new Client(socket, socket1);
 
                 all.add(c); // 管理所有的成员
                 c.run();
@@ -41,20 +43,28 @@ public class Server {
     static class Client {
 
         private final Socket client;
+        private final Socket secondSocket;
 
         private boolean isRunning = false;
 
+        public final TCPSendUtil send1;
+        public final TCPReceiveUtil receive1;
         public final TCPSendUtil send2;
         public final TCPReceiveUtil receive2;
 
         private int uip;
 
-        public Client( Socket client) {
+        public Client( Socket client, Socket secondClient) {
 
             this.client = client;
+            this.secondSocket = secondClient;
+
             isRunning = true;
-            this.send2 = new TCPSendUtil(client);
-            this.receive2 = new TCPReceiveUtil(client);
+
+            this.send1 = new TCPSendUtil(client);
+            this.receive1 = new TCPReceiveUtil(client);
+            this.send2 = new TCPSendUtil(secondClient);
+            this.receive2 = new TCPReceiveUtil(secondClient);
 
             System.out.println("一个客户建立了链接");
         }
@@ -62,7 +72,7 @@ public class Server {
         public void run() {
             new Thread(() -> {
                 while (isRunning) {
-                    String order = receive2.receiveUTF();
+                    String order = receive1.receiveUTF();
 
                     //接受命令
                     if (order != null) {
@@ -71,7 +81,7 @@ public class Server {
                         //登录
                         if (request[0].equals("LOGIN")) {
                             try {
-                                handleLogin(request[1], request[2], send2);
+                                handleLogin(request[1], request[2], send1);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -80,7 +90,7 @@ public class Server {
                         //注册
                         if (request[0].equals("REGISTER")) {
                             try {
-                                handleRegister(request[1], request[2], send2);
+                                handleRegister(request[1], request[2], send1);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -88,46 +98,45 @@ public class Server {
 
                         //保存聊天记录
                         if (request[0].equals("INFORMATION")) {
-                            handleMessage(Integer.parseInt(request[1]), Integer.parseInt(request[2]), request[3], send2);
+                            handleMessage(Integer.parseInt(request[1]), Integer.parseInt(request[2]), request[3], send1);
                         }
 
                         //修改用户名
                         if (request[0].equals("UPDATE")) {
-                            handUpdateUserName(request[1], Integer.parseInt(request[2]), send2);
+                            handUpdateUserName(request[1], Integer.parseInt(request[2]), send1);
                         }
 
                         //更新头像
                         if (request[0].equals("UPDATEHEAD")) {
-                            handUpdateHead(Integer.parseInt(request[1]), request[2], send2);
+                            handUpdateHead(Integer.parseInt(request[1]), request[2], send1);
                         }
 
                         //添加好友
                         if (request[0].equals("ADDFRIENDS")) {
                             System.out.println(request.toString());
-                            handleAddFriends(request[1], Integer.parseInt(request[2]), request[3], send2);
+                            handleAddFriends(request[1], Integer.parseInt(request[2]), request[3], send1);
                         }
 
                         if (request[0].equals("SEARCHFRIENDS")) {
-                            searchFriends(request[1],Integer.parseInt(request[2]), send2);
+                            searchFriends(request[1],Integer.parseInt(request[2]), send1);
                         }
 
                         if(request[0].equals("TOPFRIENDS")){
-                            goodFriends(Integer.parseInt(request[1]),send2);
+                            goodFriends(Integer.parseInt(request[1]),send1);
                         }
 
                         if(request[0].equals("VOICECHAT"))
                         {
-                            handleVoiceChat(Integer.parseInt(request[1]),Integer.parseInt(request[2]),send2);
+                            handleVoiceChat(Integer.parseInt(request[1]),Integer.parseInt(request[2]),send1);
                         }
 
                         if (request[0].equals("FinishVoiceChat"))
                         {
-
                         }
 
                         if (request[0].equals("SHOWPENDINGFRIENDS"))
                         {
-                            showPendingFriends(Integer.parseInt(request[1]),send2);
+                            showPendingFriends(Integer.parseInt(request[1]),send1);
                         }
                     }
 
@@ -389,6 +398,7 @@ public class Server {
                     if (fc != null) {
                         System.out.println(fc);
                         fc.send2.sendUTF("pending#" + DbUtil.getUserName(userid));
+                        System.out.println("pending#" + DbUtil.getUserName(userid));
                     }
                 }
             }
@@ -496,7 +506,7 @@ public class Server {
 
                 System.out.print("查找正在申请的好友在这里：");
                 System.out.println(result.toString());
-                send2.sendUTF(result.toString());
+                send1.sendUTF(result.toString());
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
