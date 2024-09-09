@@ -784,8 +784,8 @@ public class Home extends Application {
                 // Ensure that the stage is valid
                 Stage stage = (Stage) rightContentBox.getScene().getWindow();
                 if (stage != null) {
-                    popup.setX(130);
-                    popup.setY(300);
+                    popup.setX(stage.getX()+246);
+                    popup.setY(stage.getY()+100);
                     popup.show(stage);
                 } else {
                     System.out.println("Stage is null.");

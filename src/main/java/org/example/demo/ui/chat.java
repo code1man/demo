@@ -6,9 +6,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -33,7 +31,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
-
 public class chat extends Application {
     private TextArea chatArea = new TextArea();
     private String username;
@@ -43,6 +40,8 @@ public class chat extends Application {
     private TextField messageInput;
     private Sender sender;
     private CameraUtil cameraUtil;
+    private VBox chatBox;
+    private VBox nameBox;
 
 
     private String friendName;
@@ -64,16 +63,48 @@ public class chat extends Application {
             e.printStackTrace();
         }
     }
+    private HBox createBubble(String message, boolean isSent) {
+        Label messageLabel = new Label(message);
+        messageLabel.setStyle("-fx-background-color: lightblue; -fx-background-radius: 15; -fx-padding: 10; -fx-text-fill: black;");
+
+        // 创建气泡背景
+        HBox bubbleBox = new HBox();
+        bubbleBox.setPadding(new Insets(5));
+        bubbleBox.setAlignment(isSent ? Pos.CENTER_LEFT : Pos.CENTER_RIGHT);
+        bubbleBox.setMinWidth(100);
+        bubbleBox.setMaxWidth(300);
+
+        if (isSent) {
+            // 发送消息的气泡
+            bubbleBox.getChildren().add(messageLabel);
+            bubbleBox.setAlignment(Pos.CENTER_LEFT);
+        } else {
+            // 接收消息的气泡
+            bubbleBox.setAlignment(Pos. CENTER_RIGHT);
+            bubbleBox.getChildren().add(messageLabel);
+        }
+
+        return bubbleBox;
+    }
 
     @FXML
     public void sendMessage() {
         String message = messageInput.getText();
-        if (!message.isEmpty()) {
-            String formattedMessage = username + ": " + message;  // 在消息前附加用户名
-            sender.sendMessage(formattedMessage);
+        if (!message.trim().isEmpty()) {
+            // 创建气泡背景
+            HBox bubbleBox = createBubble(message, true);
+            bubbleBox.getChildren().add(nameBox);// 传入 true 表示发送消息
+            chatBox.getChildren().add(bubbleBox);
+
+            // 滚动到最新消息
+            ScrollPane scrollPane = (ScrollPane) chatBox.getParent().getParent();
+            scrollPane.setVvalue(1.0);
+
+            // 清空输入框
             messageInput.clear();
         }
-    }
+        }
+
 
     // 从服务器接收消息并显示在 chatArea 中
    public void startListening() {
@@ -219,18 +250,31 @@ public class chat extends Application {
     @Override
     public void start(Stage primaryStage) {
         initialize();
-                                               // 接受从数据库获得的用户名
+
+        nameBox=new VBox(10);// 接受从数据库获得的用户名
         primaryStage.getIcons().add(new Image("/logo.jpg"));
         // 根布局 Pane，用于设置背景
         Pane root = new Pane();
         root.setStyle("-fx-background-image: url('/back01.png'); -fx-background-size: cover;");
 
-        // 对话框部分 (白色背景)
-        chatArea = new TextArea();
-        chatArea.setEditable(false); // 只允许查看信息，不可编辑
-        chatArea.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
-        chatArea.setPrefHeight(400); // 设置高度
+//        // 对话框部分 (白色背景)
+//        chatArea = new TextArea();
+//        chatArea.setEditable(false); // 只允许查看信息，不可编辑
+//        chatArea.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
+//
+//        chatArea.setPrefHeight(400); // 设置高度
 
+        chatBox = new VBox(10);
+        chatBox.setPadding(new Insets(10));
+        chatBox.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
+        Label label=new Label(username);
+        nameBox.getChildren().add(label);
+        nameBox.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
+        ScrollPane chatScrollPane = new ScrollPane();
+        chatScrollPane.setContent(chatBox);
+        chatScrollPane.setFitToWidth(true);
+        chatScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        chatScrollPane.setPrefHeight(400);
         // 工具栏，包含视频通话和语音通话
         HBox toolbar = new HBox(10); // 10 为按钮之间的间距
         videoCall = new Button("视频通话");
@@ -312,7 +356,7 @@ public class chat extends Application {
 
         // 总体布局，将所有组件按顺序放入
         VBox layout = new VBox(10); // 10 为组件之间的间距
-        layout.getChildren().addAll(chatArea, toolbar, messageBox);
+        layout.getChildren().addAll(nameBox,chatScrollPane, toolbar, messageBox);
         layout.setPadding(new Insets(20)); // 设置内边距
         layout.setAlignment(Pos.BOTTOM_CENTER); // 设置总体布局居中
 
@@ -326,6 +370,7 @@ public class chat extends Application {
         primaryStage.show();
     }
 
+
     //写进txt
     public void saveMessageToFile(String friendname, String message) {
 
@@ -336,6 +381,8 @@ public class chat extends Application {
             e.printStackTrace();
         }
     }
+
+
 
     public static void main(String[] args) {
         launch(args);
