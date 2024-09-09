@@ -19,7 +19,6 @@ public class TCPReceiveUtil implements Closeable{
     //接受字符串
     public String receiveUTF() {
         try {
-            DataInputStream dis = new DataInputStream(this.client.getInputStream());
             return dis.readUTF();
         } catch (IOException e) {
             e.printStackTrace();

@@ -26,7 +26,7 @@ public class RemoteControlServer {
 
         try (// 1、指定端口 使用SeverSocket创建服务器
              ServerSocket server = new ServerSocket(6666);
-             ServerSocket serverSocket = new ServerSocket(7777);) {
+             ServerSocket serverSocket = new ServerSocket(8888);) {
             // 2、阻塞式等待连接 accept
             while (true) {
                 Socket client = server.accept();

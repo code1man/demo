@@ -2,28 +2,24 @@ package org.example.demo.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.geometry.Bounds;
-
-import javafx.beans.property.StringProperty;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
-
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.example.demo.Client;
+import org.example.demo.Main;
+import org.example.demo.controller.shenqingController;
 import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
@@ -33,22 +29,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import javafx.scene.text.Text;
-import javafx.stage.FileChooser;
-import javafx.stage.Popup;
-import javafx.stage.Stage;
-import javafx.stage.Window;
-import org.example.demo.Client;
-import org.example.demo.Main;
-
-import java.io.File;
-import java.io.IOException;
 
 
 public class Home extends Application {
@@ -63,6 +43,8 @@ public class Home extends Application {
     private VBox rightContentBox; // 右侧内容块
     private TextField searchField; // 搜索框
 
+    private Thread receiveApplyThread;
+
     public static ImageView userAvatar;
     public static yuanchengkongzhi controlWindow; //远程控制方便更改ImageView
     // 远程投屏是用fxml写的，名字是 TencentMeeting
@@ -74,8 +56,6 @@ public class Home extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-
-
         //先连接
         try {
             Client.client = new Socket("127.0.0.1",7777);
@@ -85,44 +65,49 @@ public class Home extends Application {
 
         TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
-//
+
         new Thread(()->{
             String request2 = "SHOWPENDINGFRIENDS " +Client.uid;
             sendUtil.sendUTF(request2);
-            System.out.println(receiveUtil.receiveUTF());
+            System.out.println(request2);
+
+            String s = receiveUtil.receiveUTF();
+            if (!s.isEmpty()) {
+                String[] info = s.split("#");
+                Platform.runLater(() -> {
+                    for (int i = 1; i <= info.length; i++) {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/demo/shenqing.fxml"));
+                        Parent root = null;
+                        try {
+                            root = loader.load();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        Popup popup = new Popup();
+                        popup.getContent().add(root);
+
+                        // Calculate popup position
+                        double screenWidth = primaryStage.getWidth();
+                        double screenHeight = primaryStage.getHeight();
+                        double popupWidth = 100;  // Adjust as needed
+                        double popupHeight = 100;
+
+                        // Position the popup in the bottom-right corner
+                        double popupX = screenWidth - popupWidth - 10; // Margin from screen edge
+                        double popupY = screenHeight - popupHeight - 10; // Margin from screen edge
+                        // 从服务器数据库读来的数据
+                        shenqingController controller = loader.getController();
+                        controller.updateLabels(info[i - 1], "/touxiang.png");
+                        controller.setPopup(popup);
+
+                        // Position the popup near the button (e.g., bottom-right)
+                        popup.show(primaryStage, popupX, popupY);
+                    }
+                });
+            }
         }
         ).start();
-
-
-        Button applyButton = new Button("申请");
-        Button acceptButton =  new Button("接受");
-        Button refuseButton =  new Button("拒绝");
-
-        acceptButton.setOnAction(ev->{
-            String friendName = "";//这里后面要改从消息列表上取
-            String request = "ADDFRIENDS"+" "+"accepted"+" "+Client.uid+" "+friendName;
-
-            sendUtil.sendUTF(request);
-
-            Client.friendNames.add(receiveUtil.receiveUTF()) ;
-
-        });
-
-        applyButton.setOnAction(ev->{
-
-
-        });
-
-        refuseButton.setOnAction(ev->{
-            String friendName = "";     //这里后面要改，从检索出来的消息列表取
-
-            String request = "ADDFRIENDS"+" "+"blocked"+" "+Client.uid+" "+friendName;
-
-            sendUtil.sendUTF(request);
-
-            System.out.println(receiveUtil.receiveUTF());
-
-        });
 
         Main.stage = primaryStage;
         primaryStage.setTitle("客户端0.0.1");
@@ -386,6 +371,63 @@ public class Home extends Application {
         Main.scene = scene;
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        receiveApplyThread = new Thread( ()-> {
+            TCPReceiveUtil tcpReceiveUtil = new TCPReceiveUtil(Client.client);
+            while (true) {
+                String message = tcpReceiveUtil.receiveUTF();
+                System.out.println(message);
+                if (message != null) {
+                    processMessage(message);
+                }
+            }
+        });
+        receiveApplyThread.start();
+//
+    }
+
+    private void processMessage(String message) {
+        Platform.runLater(() -> {
+            try {
+                String[] info = message.split("#");
+                if (info.length > 0) {
+                    if (info[0].equals("padding")) {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("popup.fxml"));
+                        Pane root;
+                        try {
+                            root = loader.load();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+
+                        Popup popup = new Popup();
+                        popup.getContent().add(root);
+
+                        double screenWidth = Main.stage.getWidth();
+                        double screenHeight = Main.stage.getHeight();
+                        double popupWidth = root.getPrefWidth();
+                        double popupHeight = root.getPrefHeight();
+
+                        double popupX = screenWidth - popupWidth - 10; // Margin from screen edge
+                        double popupY = screenHeight - popupHeight - 10; // Margin from screen edge
+
+                        shenqingController controller = loader.getController();
+                        controller.setPopup(popup); // Pass the popup to the controller
+                        controller.updateLabels(info[1], "/touxiang.png"); // Example data
+
+                        popup.show(root, popupX, popupY);
+                    } else if (info[0].equals("ACCEPT")) {
+                        // Handle "ACCEPT" case
+                        Client.friendNames.add(info[1]);
+                    } else if (info[0].equals("REJECT")) {
+                        System.out.println("你被" + info[1] + "拒绝了");
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private HBox createRecommendationItem(String userName) {
@@ -998,4 +1040,5 @@ public class Home extends Application {
 
         return chatHistory.toString();
     }
+
 }

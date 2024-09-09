@@ -1,24 +1,27 @@
 package org.example.demo.ui;
 
 import javafx.application.Application;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import org.example.demo.Client;
+import org.example.demo.ui.Chat_add.Sender;
+import org.example.demo.ui.Chat_add.VoiceCallClient;
+import org.example.demo.utils.CameraUtil;
 import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
-import javax.swing.text.Utilities;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -29,11 +32,8 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import org.example.demo.ui.Chat_add.*;
-import org.example.demo.utils.CameraUtil;
 
 
-import java.io.IOException;
 public class chat extends Application {
     private TextArea chatArea = new TextArea();
     private String username;
@@ -42,14 +42,11 @@ public class chat extends Application {
     private Button videoCall;
     private TextField messageInput;
     private Sender sender;
+    private CameraUtil cameraUtil;
 
 
     private String friendName;
     public chat(String username,String friendName) {
-
-    private CameraUtil cameraUtil;
-
-    public void setUsername(String username) {
         this.username = username;
         this.friendName = friendName;
         //可能要改成数据库中记录的用户名
@@ -115,7 +112,7 @@ public class chat extends Application {
 
             String  hostID = Client.uid;
 
-            String request = "VOICECHAT"+" "+hostID+" "+DbUtil.getID(friendName);
+            String request = "VOICECHAT"+" "+hostID+" "+ DbUtil.getID(friendName);
 
 
             sendUtil.sendUTF(request);
@@ -230,34 +227,26 @@ public class chat extends Application {
 
         // 对话框部分 (白色背景)
         chatArea = new TextArea();
-
         chatArea.setEditable(false); // 只允许查看信息，不可编辑
         chatArea.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
         chatArea.setPrefHeight(400); // 设置高度
 
         // 工具栏，包含视频通话和语音通话
         HBox toolbar = new HBox(10); // 10 为按钮之间的间距
-        Button videoCall = new Button("视频通话");
-
         videoCall = new Button("视频通话");
         voiceCall = new Button("语音通话");
-
         toolbar.getChildren().addAll(videoCall, voiceCall);
         toolbar.setStyle("-fx-padding: 5; -fx-border-color: black; -fx-border-radius: 5;");
 
         // 发送消息框 (淡蓝色背景，有弧度)
-
         messageInput = new TextField();
-
         messageInput.setPromptText("请输入信息发送");
         messageInput.setStyle("-fx-background-color: lightblue; -fx-background-radius: 10; -fx-border-radius: 10;");
         messageInput.setPrefHeight(40); // 设置输入框的高度
         messageInput.setPrefWidth(450); // 设置输入框的宽度
 
         // 发送按钮 (深蓝色背景，弧度按钮)
-
         sendButton = new Button("发送信息");
-
         sendButton.setStyle("-fx-background-color: darkblue; -fx-text-fill: white; -fx-background-radius: 10;");
         sendButton.setPrefSize(100, 40); // 设置按钮大小
 
@@ -278,13 +267,11 @@ public class chat extends Application {
                     ResultSet resultSet = DbUtil.executeQuery(sql,arrayList);
                     String request = "";
 
-
-
                     if(resultSet.next()) {
                         String receiver = resultSet.getString("userid");
                         //还没弄入文件
                         String messageText = message;
-                      request = "INFORMATION"+" "+sender+" "+receiver+" "+messageText;
+                        request = "INFORMATION"+" "+sender+" "+receiver+" "+messageText;
                     }
 
                     try {
@@ -316,7 +303,6 @@ public class chat extends Application {
         });
 
         voiceCall.setOnAction(this::call);
-
         videoCall.setOnAction(this::call);
 
         // 底部的消息输入和发送按钮布局
@@ -335,13 +321,10 @@ public class chat extends Application {
 
         // 场景设置，调整页面大小
         Scene scene = new Scene(root, 600, 550); // 调整页面大小为 800x600
-
-        //primaryStage.setTitle("聊天窗口");
-
+        primaryStage.setTitle("聊天窗口");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
 
     //写进txt
     public void saveMessageToFile(String friendname, String message) {
@@ -354,8 +337,6 @@ public class chat extends Application {
         }
     }
 
-
-
     public static void main(String[] args) {
         launch(args);
     }
@@ -363,7 +344,4 @@ public class chat extends Application {
     public TextArea getChatArea() {
         return chatArea;
     }
-
-
-
 }
