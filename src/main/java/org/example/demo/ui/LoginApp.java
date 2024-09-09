@@ -149,7 +149,7 @@ public class LoginApp extends Application {
         //Socket socket = null;
         //由于外部还没有完成连接代码
         try {
-            Client.client = new Socket("127.0.0.1",7777);
+           Client.client = new Socket("127.0.0.1",7777);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }

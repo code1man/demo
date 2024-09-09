@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -45,7 +46,11 @@ public class VoiceCallServer {
                 while ((bytesRead = in.read(buffer)) != -1) {
                     broadcast(buffer, bytesRead);
                 }
-            } catch (IOException e) {
+            }
+            catch (SocketException e) {
+                System.out.println("连接被重置: " + e.getMessage());
+            }
+            catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 closeConnection();
