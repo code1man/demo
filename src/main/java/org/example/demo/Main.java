@@ -14,7 +14,8 @@ import java.net.Socket;
 public class Main extends Application {
 
     public static LoginController loginController;
-    private static Scene scene;
+    public static Scene scene;
+    public  static  Stage stage;
 
     @Override
      public void start(Stage stage) throws IOException {

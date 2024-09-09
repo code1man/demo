@@ -20,14 +20,15 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import org.example.demo.Client;
 
 public class personalinfo extends Application {
 
     private UserInfoListener userInfoListener;
+   // private UserInfoListener userInfoListener;
 
     // 自定义构造函数，传递回调接口
-    public personalinfo(UserInfoListener userInfoListener) {
-        this.userInfoListener = userInfoListener;
+    public personalinfo() {
     }
 
     @Override
@@ -93,7 +94,6 @@ public class personalinfo extends Application {
             }
                 });
 
-
         avatarImageView.setFitWidth(100);
         avatarImageView.setFitHeight(100);
         avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px;");
@@ -105,18 +105,22 @@ public class personalinfo extends Application {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
 
+
             // 获取当前窗口作为文件选择器的父窗口
             Window currentWindow = avatarImageView.getScene().getWindow();
             // 打开文件选择器，等待用户选择文件
             File selectedFile = fileChooser.showOpenDialog(currentWindow);
 
+
             if (selectedFile != null) {
                 // 如果用户选择了文件，则将其转换为Image
                 Image avatarImage = new Image(selectedFile.toURI().toString());
 
+                Client.avatarUrl = selectedFile.getPath();
                 // 将Image设置给ImageView
                 avatarImageView.setImage(avatarImage);
             }
+
         });
 
         // 输入框与选择框的通用样式
@@ -184,21 +188,17 @@ public class personalinfo extends Application {
         submitButton.setStyle("-fx-background-color: #4169E1; -fx-border-radius: 15; -fx-background-radius: 15; -fx-text-fill: white;");
         submitButton.setOnAction(e -> {
             // 获取用户输入的数据
-            String username = usernameField.getText();
-            String signature = signatureField.getText();
-            String gender = genderComboBox.getValue();
-            String birthday = birthdayField.getText();
-            String country = countryComboBox.getValue();
-            String province = provinceComboBox.getValue();
-            Image avatar = avatarImageView.getImage();
 
             //更新头像
             Client.updateAvatar(Home.userAvatar);
 
-            // 通过回调函数将数据传回主界面
-            if (userInfoListener != null) {
-                userInfoListener.onUserInfoUpdated(username, signature, gender, birthday, country, province, avatar);
-            }
+            Client.name = usernameField.getText();
+            Client.signature = signatureField.getText();
+            Client.sex = genderComboBox.getValue();
+            Client.birthday = birthdayField.getText();
+            Client.country = countryComboBox.getValue();
+            Client.province = provinceComboBox.getValue();
+
 
             // 关闭修改窗口
             primaryStage.close();

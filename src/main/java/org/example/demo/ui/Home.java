@@ -2,14 +2,22 @@ package org.example.demo.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Parent;
+
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -29,6 +37,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
+import javafx.stage.Popup;
+import javafx.stage.Stage;
+import javafx.stage.Window;
+import org.example.demo.Client;
+import org.example.demo.Main;
+
+import java.io.File;
+import java.io.IOException;
+
+
 public class Home extends Application {
 
     private Label userAvatarLabel;
@@ -40,20 +60,18 @@ public class Home extends Application {
     private AnchorPane rightPane; // 使用 AnchorPane 来控制右侧内容块的位置
     private VBox rightContentBox; // 右侧内容块
     private TextField searchField; // 搜索框
-
+    
     public static ImageView userAvatar;
 
     // 用于缓存好友的聊天窗口
-
-
-
-
     public static void main(String[] args) {
         launch(args);
     }
 
     @Override
     public void start(Stage primaryStage) {
+
+
         //先连接
         try {
             Client.client = new Socket("127.0.0.1",7777);
@@ -63,6 +81,13 @@ public class Home extends Application {
 
         TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+//
+        new Thread(()->{
+            String request2 = "SHOWPENDINGFRIENDS " +Client.uid;
+            sendUtil.sendUTF(request2);
+            System.out.println(receiveUtil.receiveUTF());
+        }
+        ).start();
 
 
         Button applyButton = new Button("申请");
@@ -71,29 +96,23 @@ public class Home extends Application {
 
         acceptButton.setOnAction(ev->{
             String friendName = "";//这里后面要改从消息列表上取
-            String request = "addFriends"+" "+"accepted"+" "+Client.uid+" "+DbUtil.getID(friendName);
+            String request = "ADDFRIENDS"+" "+"accepted"+" "+Client.uid+" "+friendName;
 
             sendUtil.sendUTF(request);
 
-            System.out.println(receiveUtil.receiveUTF());
+            Client.friendNames.add(receiveUtil.receiveUTF()) ;
 
         });
 
         applyButton.setOnAction(ev->{
-            String friendName = "";     //这里后面要改，从检索出来的标签取
 
-            String request = "addFriends"+" "+"pending"+" "+Client.uid+" "+DbUtil.getID(friendName);
-
-            sendUtil.sendUTF(request);
-
-            System.out.println(receiveUtil.receiveUTF());
 
         });
 
         refuseButton.setOnAction(ev->{
             String friendName = "";     //这里后面要改，从检索出来的消息列表取
 
-            String request = "addFriends"+" "+"blocked"+" "+Client.uid+" "+DbUtil.getID(friendName);
+            String request = "ADDFRIENDS"+" "+"blocked"+" "+Client.uid+" "+friendName;
 
             sendUtil.sendUTF(request);
 
@@ -101,9 +120,10 @@ public class Home extends Application {
 
         });
 
-
+        Main.stage = primaryStage;
         primaryStage.setTitle("客户端0.0.1");
         primaryStage.getIcons().add(new Image("logo.jpg"));
+        
         // 左侧菜单区域
         VBox leftMenu = new VBox(20); // 将间距设为 20
         leftMenu.setPadding(new Insets(15));
@@ -116,21 +136,18 @@ public class Home extends Application {
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 2, 2);");
 
         leftMenu.setAlignment(Pos.CENTER); // 将内容在VBox中居中对齐
-
+        
         System.out.println(Client.avatarUrl);
-        // 用户头像区域（修改为按钮）
-        //ImageView userAvatar = new ImageView(new Image(getClass().getResourceAsStream(Client.avatarUrl)));
 
         File avatarFile = new File(Client.avatarUrl);
-
-
-// 如果文件存在，加载头像到 ImageView 中
+        
+       // 如果文件存在，加载头像到 ImageView 中
 
         userAvatar = new ImageView(new Image(avatarFile.toURI().toString()));
         Client.updateAvatar(userAvatar);
 
         //ImageView userAvatar = new ImageView(new Image("file:"+Client.avatarUrl));
-
+        
         userAvatar.setFitWidth(100);
         userAvatar.setFitHeight(100);
 
@@ -265,11 +282,145 @@ public class Home extends Application {
         searchBox.setPadding(new Insets(10));
         searchBox.setAlignment(Pos.CENTER_RIGHT);
 
+        // 创建Popup来展示推荐用户
+        Popup recommendationPopup = new Popup();
+        ListView<HBox> recommendationList = new ListView<>();
+        recommendationList.setPrefWidth(searchField.getPrefWidth());
+
+        String request1= "TOPFRIENDS " + Client.uid;
+        sendUtil.sendUTF(request1);
+        String back1 = receiveUtil.receiveUTF();
+        String[] result1= back1.split(" ");
+
+
+        for (String user : result1) {
+            HBox itemBox = createRecommendationItem(user);
+            recommendationList.getItems().add(itemBox);
+        }
+
+        // 监听搜索框内容变化
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            recommendationList.getItems().clear(); // 清空之前的推荐列表
+
+//            if (newValue.isEmpty()) {
+//                // 如果搜索框为空，显示前三个好评率最高的非好友
+//                String request = "TOPFRIENDS " + Client.uid;
+//                sendUtil.sendUTF(request);
+//                String back = receiveUtil.receiveUTF();
+//                String[] result = back.split(" ");
+//
+//                for (String user : result) {
+//                    HBox itemBox = createRecommendationItem(user);
+//                    recommendationList.getItems().add(itemBox);
+//                }
+//            } else {
+            if(!newValue.isEmpty()){
+               //  搜索框中有内容时，调用searchFriends显示匹配的非好友
+                String request = "SEARCHFRIENDS " + newValue + " " + Client.uid;
+                sendUtil.sendUTF(request);
+                String back = receiveUtil.receiveUTF();
+                String[] result = back.split(" ");
+
+                if (result.length == 0 || (result.length == 1 && result[0].isEmpty())) {
+                    Label noUserLabel = new Label("没有找到符合条件的用户");
+                    recommendationList.getItems().clear();
+                    recommendationList.getItems().add(new HBox(noUserLabel));
+                } else {
+                    // 清空列表并显示检索到的用户
+                    recommendationList.getItems().clear();
+                    for (String username : result) {
+                        if (!username.isEmpty()) {
+                            HBox itemBox = createRecommendationItem(username);
+                            recommendationList.getItems().add(itemBox);
+                        }
+                    }
+
+                }
+            }
+        });
+
+// 初始化时展示推荐的用户
+        recommendationPopup.getContent().add(recommendationList);
+
+// 搜索框点击事件
+        searchField.setOnMouseClicked(e -> {
+            if (!recommendationPopup.isShowing()) {
+                Window window = searchField.getScene().getWindow();
+                recommendationList.setPrefWidth(searchField.getWidth());
+                recommendationPopup.show(window, window.getX() + searchField.localToScene(0, 0).getX() + searchField.getScene().getX(),
+                        window.getY() + searchField.localToScene(0, 0).getY() + searchField.getHeight() + searchField.getScene().getY());
+            }
+        });
+
+// 确保点击其他地方关闭推荐框
+        root.setOnMouseClicked(e -> {
+            if (!searchField.isFocused() && recommendationPopup.isShowing()) {
+                recommendationPopup.hide();
+            }
+        });
+
+
+        // 确保搜索框保持焦点时，不会关闭推荐框
+        searchField.setOnKeyPressed(e -> {
+            if (!recommendationPopup.isShowing()) {
+                recommendationPopup.show(searchField, searchField.getLayoutX(), searchField.getLayoutY() + searchField.getHeight());
+            }
+        });
+
+        // 添加到主面板
         root.setTop(searchBox);
 
-        Scene scene = new Scene(root, 800, 600); // 设置整体界面大小为800x600
+        Scene scene = new Scene(root, 800, 600);
+        Main.scene = scene;
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+    
+    private HBox createRecommendationItem(String userName) {
+        //----------------------------------------------------------------------------
+        //先连接
+        try {
+            Client.client = new Socket("127.0.0.1",7777);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+        //---------------------------------------------------------------------------[
+
+        HBox itemBox = new HBox(10);
+        itemBox.setAlignment(Pos.CENTER_LEFT);
+        itemBox.setPadding(new Insets(10));
+        itemBox.setStyle("-fx-background-color: white; " +
+                "-fx-border-color: lightgray; " +
+                "-fx-border-radius: 5px; " +
+                "-fx-background-radius: 5px;");
+
+        Label userLabel = new Label(userName);
+        userLabel.setStyle("-fx-font-family: '微软雅黑'; -fx-font-size: 14px;");
+
+        Button addButton = new Button("加好友");
+        addButton.setStyle("-fx-background-color: lightblue; " +
+                "-fx-border-radius: 5px; " +
+                "-fx-background-radius: 5px;");
+
+        addButton.setOnAction(e -> {
+            System.out.println("添加好友: " + userName);
+            String friendName = "";     //这里后面要改，从检索出来的标签取
+
+            String request = "ADDFRIENDS"+" "+"pending"+" "+Client.uid+" "+userName;
+
+            sendUtil.sendUTF(request);
+
+            System.out.println(receiveUtil.receiveUTF());
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        itemBox.getChildren().addAll(userLabel, spacer, addButton);
+        return itemBox;
     }
 
     private void displayUserInfo() {
@@ -353,6 +504,7 @@ public class Home extends Application {
         TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
+
         switch (content) {
 
             case "默认页面":
@@ -387,6 +539,8 @@ public class Home extends Application {
 
             case "好友列表模块内容":
                 // 创建一个 VBox 用于包含搜索框
+
+                rightContentBox.getChildren().clear();
                 VBox searchBox = new VBox(10);
                 searchBox.setPadding(new Insets(10, 0, 0, 0)); // 设置上边距
 
@@ -407,25 +561,18 @@ public class Home extends Application {
                 searchBox.getChildren().add(friendsListBox); // 将好友列表添加到searchBox中
 
 
-
                 // 查询并刷新好友列表的方法
                 Runnable refreshFriendsList = () -> {
                     String search = searchField.getText(); // 获取搜索框中的内容
 
-                    String getFriendsSql = "SELECT u.username " +
-                            "FROM t_users u " +
-                            "INNER JOIN t_friends f ON u.userID = f.friendID " +
-                            "WHERE f.userID = ? AND f.status = 'accepted'";
-
-
-
-                    ArrayList<Object> arrayList = new ArrayList<>();
+/*                    ArrayList<Object> arrayList = new ArrayList<>();
                     arrayList.add(Client.uid);
-                    ResultSet friendResultSet;
+                   // ResultSet friendResultSet = null;
 
                     // 如果有搜索内容，则使用带搜索条件的 SQL，否则使用默认 SQL
                     if (!search.equals("") && search != null) {
                         String request = "SEARCHFRIENDS1"+" "+Client.uid+" "+"%"+search+"%";
+                        request.indexOf(search);
                         sendUtil.sendUTF(request);
 
 //                        arrayList.add("%" + search + "%");
@@ -433,28 +580,26 @@ public class Home extends Application {
                     } else {
                         String request = "SEARCHFRIENDS2"+" "+Client.uid;
                         sendUtil.sendUTF(request);
-                       // friendResultSet = DbUtil.executeQuery(getFriendsSql, arrayList);
+                        //friendResultSet = DbUtil.executeQuery(getFriendsSql, arrayList);
 
+                    }*/
+                    Client.selectFriendName.clear();
+                    for (String fname: Client.friendNames) {
+                        if (fname.indexOf(search) != -1) {
+                            Client.selectFriendName.add(fname);
+                        }
                     }
 
                     // 清空原有的好友列表
                     friendsListBox.getChildren().clear();
 
                     // 添加好友条块
-                    while (true) {
-                        try {
-                            if (!Client.friendResultSet.next()) break;
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
-
+                    for (int i = 0 ; i<Client.selectFriendName.size(); i++) {
                         // 创建用户名标签
                         Label friendLabel = null;
-                        try {
-                            friendLabel = new Label(Client.friendResultSet.getString("username"));
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
+
+                        friendLabel = new Label(Client.selectFriendName.get(i));
+
                         friendLabel.setStyle("-fx-font-family: 'Arial'; -fx-font-size: 14px;");
                         friendLabel.setPadding(new Insets(10));
 
@@ -536,43 +681,61 @@ public class Home extends Application {
 
 // 在显示用户信息的case中
             case "userInfo":
-                VBox userInfoBox = new VBox(10);
-                userInfoBox.setPadding(new Insets(10));
-                userInfoBox.setStyle("-fx-background-color: white; " +
-                        "-fx-border-radius: 15; " +
-                        "-fx-background-radius: 15; " +
-                        "-fx-border-color: lightgray; " +
-                        "-fx-border-width: 2px; " +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 2, 2);");
+                Popup popup = new Popup();
 
-                // 添加修改信息按钮
+                popup.setAutoHide(true); // 鼠标移开时自动隐藏
+
+                // 创建控件
+                Label usernameLabel = new Label("用户名: " + Client.name);
+                Label signatureLabel = new Label("个性签名: " + Client.signature);
+                Label genderLabel = new Label("性别: " + Client.sex);
+                Label birthdayLabel = new Label("生日: " + Client.birthday);
+                Label countryLabel = new Label("国家: " + Client.birthday);
+                Label provinceLabel = new Label("省份: " + Client.province);
+
+                Image profileImage = new Image(Client.avatarUrl);
+                ImageView profileImageView = new ImageView(profileImage);
+                profileImageView.setFitWidth(100);
+                profileImageView.setFitHeight(100);
+                profileImageView.setPreserveRatio(true);
+
+                VBox vBox = new VBox(10);
+                vBox.setAlignment(Pos.CENTER_LEFT);
+
                 Button editInfoButton = new Button("修改信息");
 
-                // 头像区域
-                Label avatarLabel = new Label("点击上传头像");
-                ImageView avatarImageView = new ImageView();
-                avatarImageView.setFitWidth(100);
-                avatarImageView.setFitHeight(100);
-                avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px;");
+                vBox.getChildren().addAll(usernameLabel, signatureLabel, genderLabel, birthdayLabel, countryLabel, provinceLabel, editInfoButton);
+                HBox hBox = new HBox(10);
+                hBox.setAlignment(Pos.CENTER_LEFT);
+                hBox.getChildren().addAll(profileImageView, vBox);
 
-                // 用户信息展示
-                Label usernameLabel = new Label("用户名: "+Client.name);
-                Label signatureLabel = new Label("个性签名: XXX");
-                Label genderLabel = new Label("性别: 男");
-                Label birthdayLabel = new Label("生日: 2000-01-12");
-                Label countryLabel = new Label("国家: 中国");
-                Label provinceLabel = new Label("省份: 北京市");
+                Pane pane = new Pane();
+                pane.getChildren().add(hBox);
 
-                // 监听修改信息按钮点击事件，打开 personalinfo 窗口
+                pane.setStyle("-fx-background-color: #ffffff; " +
+                        "-fx-border-color: #cccccc; " +
+                        "-fx-border-width: 2px; " +
+
+                        "-fx-border-radius: 10px; " +
+                        "-fx-background-radius: 10px; " +
+                        "-fx-padding: 5px; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-pref-width: 550px;");
+
+                popup.getContent().add(pane);
+
+                // Ensure that the stage is valid
+                Stage stage = (Stage) rightContentBox.getScene().getWindow();
+                if (stage != null) {
+                    popup.setX(130);
+                    popup.setY(300);
+                    popup.show(stage);
+                } else {
+                    System.out.println("Stage is null.");
+                }
+
+                // Edit info button action
                 editInfoButton.setOnAction(e -> {
-                    new personalinfo((username, signature, gender, birthday, country, province, avatar) -> {
-                        // 更新用户信息
-                        usernameLabel.setText("用户名: " + username);
-                        signatureLabel.setText("个性签名: " + signature);
-                        genderLabel.setText("性别: " + gender);
-                        birthdayLabel.setText("生日: " + birthday);
-                        countryLabel.setText("国家: " + country);
-                        provinceLabel.setText("省份: " + province);
                         /*avatarImageView.setImage*///(avatar);
 
                         //本地以及数据库中的数据也需要更新
@@ -587,26 +750,28 @@ public class Home extends Application {
 //                        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
 //                        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
-                        Client.name = username;
-                        String request = "UPDATE"+" "+username+" "+Client.uid;
-
+                        String request = "UPDATE"+" "+Client.name+" "+Client.uid;
                         sendUtil.sendUTF(request);
                         System.out.println(receiveUtil.receiveUTF());
 
-                    }).start(new Stage());
-                });
+                        try {
+                            new personalinfo().start(new Stage());
+                        } catch (Exception e1) {
+                            throw new RuntimeException(e1);
+                        }
+                    });
 
-                // 将头像和用户信息添加到用户信息框
-                userInfoBox.getChildren().addAll(avatarImageView, usernameLabel, signatureLabel, genderLabel, birthdayLabel, countryLabel, provinceLabel, editInfoButton);
+
 
                 if (rightContentBox != null) {
-                    rightContentBox.getChildren().clear();  // 清除之前的内容
-                    rightContentBox.getChildren().add(userInfoBox);  // 添加用户信息框
-                }
-                break;
+                      //rightContentBox.getChildren().clear();  // 清除之前的内容
+                     //rightContentBox.getChildren().add(vBox);  // 添加用户信息框
+                    }
+                    break;
 
             case "远程投屏模块内容":
                 // 创建一个弧形边框白色背景的块
+                rightContentBox.getChildren().clear();
                 VBox remoteCastingBox = new VBox(20);
                 remoteCastingBox.setPadding(new Insets(20));
                 remoteCastingBox.setAlignment(Pos.CENTER);
@@ -626,7 +791,6 @@ public class Home extends Application {
                 leftButton.setGraphic(leftImage);
                 leftButton.setStyle("-fx-background-color: transparent;"); // 去除按钮默认样式
                 leftButton.setOnAction(e -> openScreenCastingWindow()); // 点击事件，弹出 touping 窗口
-
 
                 // 小标题1：远程投屏
                 Label leftLabel = new Label("远程投屏");
@@ -689,7 +853,7 @@ public class Home extends Application {
                 //String[] targets = {"XX01", "XX02", "XX03", "XX04", "XX05"};
                 for (String target : Client.friendNames) {
                     CheckBox checkBox = new CheckBox(target);
-                    HBox hBox = new HBox(10);
+                    hBox = new HBox(10);
                     hBox.setAlignment(Pos.CENTER_LEFT);
                     hBox.getChildren().add(checkBox);
                     targetListView.getItems().add(hBox);
@@ -712,6 +876,7 @@ public class Home extends Application {
         }
     }
     // 打开 Chat 窗口的方法
+
     private void openChatWindow(String friendname) {
         // 使用 Platform.runLater 启动新的窗口
         // 检查是否已经存在好友的聊天窗口
@@ -726,7 +891,7 @@ public class Home extends Application {
             Platform.runLater(() -> {
                 try {
                     // 创建 Chat 窗口的实例
-                    chat chatWindow = new chat();
+                    chat chatWindow = new chat(Client.name,friendname);
 
                     Stage  chatStage = new Stage();
                     chatStage.setTitle(friendname);
@@ -747,21 +912,17 @@ public class Home extends Application {
         }
     }
 
-
     // 新窗口方法：用于显示屏幕投屏的窗口
     private void openScreenCastingWindow() {
-        Platform.runLater(() -> {
-            try {
-                // 创建 touping 窗口的实例并启动
-                touping toupingWindow = new touping();
-                Stage toupingStage = new Stage();
-                toupingWindow.start(toupingStage); // 启动 touping 窗口
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
-    }
 
+        try {
+            Main.setRoot("TencentMeeting");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+    
     // 新窗口方法：用于显示设备控制的窗口
     private void openControlWindow() {
         Platform.runLater(() -> {
@@ -775,7 +936,7 @@ public class Home extends Application {
             }
         });
     }
-
+    
     // 加载聊天历史的方法，从 txt 文件中读取并返回
     private String loadChatHistory(int id) {
         StringBuilder chatHistory = new StringBuilder();
@@ -794,6 +955,4 @@ public class Home extends Application {
 
         return chatHistory.toString();
     }
-
-
 }

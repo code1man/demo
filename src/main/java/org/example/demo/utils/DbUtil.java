@@ -2,10 +2,13 @@ package org.example.demo.utils;
 
 //数据库相关工具类
 
+
 import org.example.demo.Client;
 
 import java.sql.*;
 import java.util.ArrayList;
+
+
 
 //Connection con 连接对象
 public class DbUtil {
@@ -86,9 +89,12 @@ public class DbUtil {
     public static String getUserName(int userid){
         String name = "";
         String sql = "SELECT username FROM t_users WHERE userid = ?";
+
         ArrayList<Object> arrayList = new ArrayList<>();
         arrayList.add(userid);
         ResultSet resultSet1 = DbUtil.executeQuery(sql,arrayList) ;
+
+
         try {
             if (resultSet1.next())
             {
@@ -120,8 +126,24 @@ public class DbUtil {
 
     }
 
+    public static  String getUserState(int userid)
+    {
+        String status= "";
+        String sql = "SELECT userStatus FROM t_users WHERE userID = ?";
+        ArrayList<Object> arrayList = new ArrayList<>();
+        arrayList.add(userid);
 
-
+        ResultSet resultSet1 = DbUtil.executeQuery(sql,arrayList);
+        try {
+            while(resultSet1.next())
+            {
+                status = resultSet1.getString("userStatus");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return status;
+    }
 
     public static void close() {
         if (con != null) {
