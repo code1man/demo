@@ -3,7 +3,7 @@ package org.example.demo.utils;
 import java.io.*;
 import java.net.Socket;
 
-public class TCPReceiveUtil{
+public class TCPReceiveUtil implements Closeable{
 
     private final Socket client;
     private DataInputStream dis;
@@ -71,6 +71,12 @@ public class TCPReceiveUtil{
 
     public void release() {
         CloseUtil.close(client);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (dis != null)
+            dis.close();
     }
 }
 

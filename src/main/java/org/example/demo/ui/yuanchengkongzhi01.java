@@ -1,4 +1,5 @@
 package org.example.demo.ui;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -8,16 +9,10 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.scene.paint.Color;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.BackgroundPosition;
-import javafx.scene.layout.BackgroundSize;
-import javafx.scene.layout.BackgroundImage;
-import javafx.scene.layout.BackgroundRepeat;
+import javafx.stage.Stage;
+import org.example.demo.Client;
+import org.example.demo.utils.VideoUtil;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,6 +21,7 @@ public class yuanchengkongzhi01 extends Application {
 
     private int seconds = 0;
     private Label timerLabel = new Label("远程控制时间: 0 秒");
+    private VideoUtil videoUtil = new VideoUtil("test", true);
 
     @Override
     public void start(Stage primaryStage) {
@@ -46,6 +42,10 @@ public class yuanchengkongzhi01 extends Application {
         Button endControlBtn = new Button("结束控制");
         endControlBtn.setStyle("-fx-background-color: blue; -fx-text-fill: white; -fx-background-radius: 15px;");
         endControlBtn.setOnAction(e -> {
+
+            Client.stopRemoteControl();
+            Client.stopRemoteHash();
+            videoUtil.stop();
             timer.cancel(); // 停止计时器
             primaryStage.close(); // 关闭当前悬浮窗口
             showRatingWindow(); // 弹出评分窗口
@@ -69,6 +69,7 @@ public class yuanchengkongzhi01 extends Application {
             } else {
                 iconView.setImage(icon1); // 切换回第一个图标
             }
+
         });
 
         // 创建工具栏
@@ -83,6 +84,9 @@ public class yuanchengkongzhi01 extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("远程控制客户端");
         primaryStage.show();
+
+        Client.startRemoteControl();
+        videoUtil.start();
     }
 
     // 评分弹窗

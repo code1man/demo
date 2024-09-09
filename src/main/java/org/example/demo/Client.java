@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 
-//import static org.example.demo.Main.loginController;
+import static org.example.demo.ui.Home.controlWindow;
 
 public class Client {
 
@@ -26,13 +26,16 @@ public class Client {
     public static int age = 24;
     public static String signature = "摆烂";
     public static String imagePath = "/touxiang.png";
-    public static Socket client = null;
-    public static Socket secondClient = null;
-    public static Socket friendClient = null;
 
-    private Thread recieveImgThread;
-    private Thread sendImgThread;
-    private Thread robotThread;
+    public static Socket client = null;
+    public static Socket RemoteControlClient = null;
+    public static Socket friendClient = null;
+    public static Socket CameraClient = null;
+
+
+    private static Thread recieveImgThread;
+    private static Thread sendImgThread;
+    private static Thread robotThread;
     private Thread friendResultThread;
     private Thread friendThread;
 
@@ -67,7 +70,7 @@ public class Client {
                 ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
                 try {
                     BufferedImage image = ImageIO.read(bais);
-                    //loginController.updateImage(image);
+                    controlWindow.updateImage(image);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -75,7 +78,7 @@ public class Client {
         });
 
         robotThread = new Thread(()->{
-            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.secondClient);
+            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.RemoteControlClient);
             try {
                 Robot robot = new Robot();
 
@@ -162,24 +165,25 @@ public class Client {
         });
     }
 
-    public void startRemoteHash() {
+    public static void startRemoteHash() {
         sendImgThread.start();
+    }
+
+    public static void recieveRemoteHash() {
         recieveImgThread.start();
     }
 
-    public void startRemoteControl(){
+    public static void startRemoteControl(){
         sendImgThread.start();
-        recieveImgThread.start();
         robotThread.start();
     }
 
-    public void stopRemoteControl(){
+    public static void stopRemoteControl(){
         sendImgThread.interrupt();
-        recieveImgThread.interrupt();
         robotThread.interrupt();
     }
 
-    public void stopRemoteHash(){
+    public static void stopRemoteHash(){
         sendImgThread.interrupt();
         recieveImgThread.interrupt();
     }

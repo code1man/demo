@@ -7,7 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
 
-public class TCPSendUtil {
+public class TCPSendUtil implements Closeable{
     private final Socket client;
     private final DataOutputStream dos;
 
@@ -116,5 +116,11 @@ public class TCPSendUtil {
 
     public void release() {
         CloseUtil.close(client);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (dos != null)
+            dos.close();
     }
 }

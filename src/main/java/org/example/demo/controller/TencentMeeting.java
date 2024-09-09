@@ -1,16 +1,15 @@
 // 远程投屏
-package org.example.demo.ui;
+package org.example.demo.controller;
 
-import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import org.example.demo.Main;
+import org.example.demo.ui.Home;
 
 public class TencentMeeting {
 
@@ -52,16 +51,16 @@ public class TencentMeeting {
     Image video1=new Image("/video.png");
     Image screen1=new Image("/share.jpg");
     Image chat1=new Image("/chat.png");
-    Image exit=new Image("/exit.jpg");
-    Image max=new Image("/max.jpg");
+    //Image exit=new Image("/exit.jpg");
+    //Image max=new Image("/max.jpg");
     public void initialize()
     {
         this.setPrimaryStage(primaryStage);
 
-        ImageView imageView3=new ImageView(max);
-        FullScreen.setGraphic(imageView3);
-        ImageView imageView1=new ImageView(exit);
-        quit.setGraphic(imageView1);
+        //ImageView imageView3=new ImageView(max);
+        //FullScreen.setGraphic(imageView3);
+        //ImageView imageView1=new ImageView(exit);
+        //quit.setGraphic(imageView1);
 
         microPic=new ImageView(micro);
         microPhone.setGraphic(microPic);

@@ -8,22 +8,17 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 
-<Pane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1">
+<Pane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.demo.controller.shenqingController">
    <HBox alignment="CENTER_LEFT" spacing="10.0">
       <ImageView fx:id="profileImageView" fitWidth="100.0" fitHeight="100.0" preserveRatio="true">
-         <image>
-            <Image url="/touxiang.png"/> <!-- Replace with your image path -->
-         </image>
+         <Image url="/touxiang.png"/>
       </ImageView>
       <VBox alignment="CENTER_LEFT" spacing="10.0">
          <Label fx:id="usernameLabel" text="用户名: "/>
          <Label fx:id="signatureLabel" text="个性签名: "/>
          <Label fx:id="genderLabel" text="性别: "/>
-         <Label fx:id="birthdayLabel" text="生日: "/>
-         <Label fx:id="countryLabel" text="国家: "/>
-         <Label fx:id="provinceLabel" text="省份: "/>
-         <Button fx:id="yesButton" text="Yes"/>
-         <Button fx:id="noButton" text="No"/>
+         <Button fx:id="yesButton" text="接受"/>
+         <Button fx:id="noButton" text="拒绝"/>
       </VBox>
    </HBox>
    <Pane style="-fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-width: 2px; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 5px; -fx-font-size: 14px; -fx-pref-width: 550px;"/>

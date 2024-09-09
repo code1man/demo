@@ -11,6 +11,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.example.demo.ui.Chat_add.*;
+import org.example.demo.utils.CameraUtil;
 
 
 import java.io.IOException;
@@ -18,13 +19,18 @@ public class chat extends Application {
     private String username;
     private Button sendButton;
     private Button voiceCall;
+    private Button videoCall;
     private TextField messageInput;
     private TextArea chatArea;
     private Sender sender;
+
+    private CameraUtil cameraUtil;
+
     public void setUsername(String username) {
         this.username = username;
         //可能要改成数据库中记录的用户名
     }
+
     public void initialize() {
         try {
             // 初始化客户端并连接到服务器
@@ -74,6 +80,39 @@ public class chat extends Application {
             voiceCall.setText("发起语音通话");
         }
     }
+
+    public void videoCall(ActionEvent actionEvent) {
+        if (!VoiceCallClient.isCalling) {
+            initiateVoiceCall();
+            videoCall.setText("挂断视频通话");
+        } else {
+            terminateVoiceCall();
+            videoCall.setText("发起视频通话");
+        }
+    }
+
+    private void initiateVideoCall() {
+        System.out.println("发起视频通话...");
+        // 设置正在视频通话
+        VoiceCallClient.isCalling = true;
+        CameraUtil.isCalling = true;
+
+        cameraUtil = new CameraUtil();
+        // 启动客户端的音频捕获和发送逻辑
+        try {
+            new Thread(() -> {
+                try {
+                    VoiceCallClient.main(null); // 启动音频捕获和接收线程
+                    cameraUtil.openVideoModule();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void initiateVoiceCall() {
         System.out.println("发起语音通话...");
         // 设置为正在通话状态
@@ -110,6 +149,23 @@ public class chat extends Application {
         }
     }
 
+    private void terminateVideoCall() {
+        System.out.println("结束视频通话...");
+
+        VoiceCallClient.isCalling = false;
+        CameraUtil.isCalling = false;
+
+        try {
+            if (VoiceCallClient.socket != null && !VoiceCallClient.socket.isClosed()) {
+                VoiceCallClient.socket.close();
+                cameraUtil.closeVideoModule();
+                System.out.println("Socket连接已关闭");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void start(Stage primaryStage) {
         initialize();
@@ -127,7 +183,7 @@ public class chat extends Application {
 
         // 工具栏，包含视频通话和语音通话
         HBox toolbar = new HBox(10); // 10 为按钮之间的间距
-        Button videoCall = new Button("视频通话");
+        videoCall = new Button("视频通话");
         voiceCall = new Button("语音通话");
         toolbar.getChildren().addAll(videoCall, voiceCall);
         toolbar.setStyle("-fx-padding: 5; -fx-border-color: black; -fx-border-radius: 5;");
@@ -149,6 +205,8 @@ public class chat extends Application {
             sendMessage();
         });
         voiceCall.setOnAction(this::call);
+
+        videoCall.setOnAction(this::call);
 
         // 底部的消息输入和发送按钮布局
         HBox messageBox = new HBox(10); // 10 为输入框和按钮之间的间距

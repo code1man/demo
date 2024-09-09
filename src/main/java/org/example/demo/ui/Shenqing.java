@@ -23,7 +23,6 @@ public class Shenqing extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         // Load the FXML file
-
         FXMLLoader loader = new FXMLLoader(getClass().getResource("shenqing.fxml"));
         Pane pane = loader.load();
 

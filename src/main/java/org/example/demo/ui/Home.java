@@ -33,6 +33,8 @@ public class Home extends Application {
     private VBox rightContentBox; // 右侧内容块
     private TextField searchField; // 搜索框
 
+    public static yuanchengkongzhi controlWindow; //远程控制方便更改ImageView
+    // 远程投屏是用fxml写的，名字是 TencentMeeting
 
     public static void main(String[] args) {
         launch();
@@ -243,6 +245,7 @@ public class Home extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
     private HBox createRecommendationItem(String userName) {
         HBox itemBox = new HBox(10);
         itemBox.setAlignment(Pos.CENTER_LEFT);
@@ -270,6 +273,7 @@ public class Home extends Application {
         itemBox.getChildren().addAll(userLabel, spacer, addButton);
         return itemBox;
     }
+
     private void displayUserInfo() {
         // 显示用户基本信息
         VBox userInfoBox = new VBox(10);
@@ -286,7 +290,7 @@ public class Home extends Application {
         ImageView avatarImageView = new ImageView();
         avatarImageView.setFitWidth(100);
         avatarImageView.setFitHeight(100);
-        avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px;");
+        avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px; -fx-start-margin: 10; -fx-end-margin: 20");
 
         // 创建头像框布局，放置在用户信息上方
         VBox avatarBox = new VBox(10);
@@ -454,7 +458,6 @@ public class Home extends Application {
                         "-fx-border-radius: 15; " + // 设置弧形边框
                         "-fx-background-radius: 15;"); // 设置背景弧形边框
 
-
                 // 创建一个主 VBox，用于放置搜索框和滑动框
                 VBox mainBox = new VBox(10);
                 mainBox.getChildren().addAll(searchBox, scrollPane);
@@ -466,14 +469,6 @@ public class Home extends Application {
 // Home.java 的相关修改部分
 
 // 在显示用户信息的case中
-
-
-
-
-
-
-
-
             case "userInfo":
                 Popup popup = new Popup();
 
@@ -495,6 +490,8 @@ public class Home extends Application {
 
                 VBox vBox = new VBox(10);
                 vBox.setAlignment(Pos.CENTER_LEFT);
+                vBox.setSpacing(10);
+                vBox.setPadding(new Insets(20, 0, 0, 10));
 
                 Button editInfoButton = new Button("修改信息");
 
@@ -502,6 +499,8 @@ public class Home extends Application {
                 HBox hBox = new HBox(10);
                 hBox.setAlignment(Pos.CENTER_LEFT);
                 hBox.getChildren().addAll(profileImageView, vBox);
+
+                hBox.setPadding(new Insets(10));
 
                 Pane pane = new Pane();
                 pane.getChildren().add(hBox);
@@ -563,7 +562,6 @@ public class Home extends Application {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 2, 2);");
 
                 // 图片按钮1：远程投屏
-                // 图片按钮1：远程投屏
                 ImageView leftImage = new ImageView(new Image(getClass().getResourceAsStream("/touping.png")));
                 leftImage.setFitWidth(100);
                 leftImage.setFitHeight(100);
@@ -583,7 +581,6 @@ public class Home extends Application {
                 leftBox.getChildren().addAll(leftButton, leftLabel);
 
                 // 图片按钮2：远程控制
-                // 图片按钮2：远程控制
                 ImageView rightImage = new ImageView(new Image(getClass().getResourceAsStream("/yuanchengkongzhi.png")));
                 rightImage.setFitWidth(100);
                 rightImage.setFitHeight(100);
@@ -591,7 +588,6 @@ public class Home extends Application {
                 rightButton.setGraphic(rightImage);
                 rightButton.setStyle("-fx-background-color: transparent;");
                 rightButton.setOnAction(e -> openControlWindow()); // 点击事件，弹出 yuanchengkongzhi 窗口
-
 
                 // 小标题2：远程控制
                 Label rightLabel = new Label("远程控制");
@@ -650,10 +646,9 @@ public class Home extends Application {
                 // 将整个块添加到rightContentBox中
                 rightContentBox.getChildren().add(remoteCastingBox);
                 break;
-
-
         }
     }
+
     // 打开 Chat 窗口的方法
     private void openChatWindow() {
         // 使用 Platform.runLater 启动新的窗口
@@ -671,7 +666,6 @@ public class Home extends Application {
 
     // 新窗口方法：用于显示屏幕投屏的窗口
     private void openScreenCastingWindow() {
-
         try {
             Main.setRoot("TencentMeeting");
         } catch (IOException e) {
@@ -699,7 +693,7 @@ public class Home extends Application {
         Platform.runLater(() -> {
             try {
                 // 创建 yuanchengkongzhi 窗口的实例并启动
-                yuanchengkongzhi controlWindow = new yuanchengkongzhi();
+                controlWindow = new yuanchengkongzhi();
                 Stage controlStage = new Stage();
                 controlWindow.start(controlStage); // 启动 yuanchengkongzhi 窗口
             } catch (Exception ex) {
