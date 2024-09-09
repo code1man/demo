@@ -5,18 +5,19 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.example.demo.ui.LoginApp;
 
 import java.io.IOException;
+import java.net.Socket;
 
 public class Main extends Application {
 
     public static Scene scene;
-    public static Stage stage;
+    public  static  Stage stage;
 
     @Override
      public void start(Stage stage) throws IOException {
-        this.stage = stage;
-        //Client.client = new Socket("localhost", 8888);
+        Client.client = new Socket("localhost", 8888);
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("shenqing.fxml"));
         Parent root = loader.load();
@@ -28,7 +29,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        launch();
+        launch(LoginApp.class);
     }
 
     public static void setRoot(String fxml) throws IOException {

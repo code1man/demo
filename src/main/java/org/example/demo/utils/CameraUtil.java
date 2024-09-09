@@ -7,8 +7,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.Socket;
 
+import static org.example.demo.Main.loginController;
 
 // 视频聊天获取摄像头
 public class CameraUtil {

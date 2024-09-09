@@ -13,6 +13,18 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
+import org.example.demo.Client;
+import org.example.demo.Server;
+import org.example.demo.utils.DbUtil;
+import org.example.demo.utils.TCPReceiveUtil;
+import org.example.demo.utils.TCPSendUtil;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
 public class LoginApp extends Application {
 
     @Override
@@ -23,6 +35,7 @@ public class LoginApp extends Application {
         primaryStage.getIcons().add(new Image("/logo.jpg"));
         // 设置背景图片
         Image backgroundImage = new Image("/back03.jpg"); // 使用上传的图片路径
+
         BackgroundImage background = new BackgroundImage(
                 backgroundImage, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
                 new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, true, true, false, true)
@@ -40,11 +53,13 @@ public class LoginApp extends Application {
 
         // logo图片
         ImageView logo = new ImageView("/logo.jpg");  // 替换为你logo图片的路径
+
         logo.setFitWidth(100);
         logo.setFitHeight(80);
 
         // slogan图片
         ImageView slogen = new ImageView("/slogen.png");  // 替换为你slogan图片的路径
+
         slogen.setFitWidth(120);
         slogen.setFitHeight(15);
 
@@ -131,37 +146,113 @@ public class LoginApp extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
+        //Socket socket = null;
+        //由于外部还没有完成连接代码
+        try {
+            Client.client = new Socket("127.0.0.1",7777);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+
         // 登录按钮点击事件
         loginButton.setOnAction(e -> {
-            // 注释掉实际的数据库登录代码
-            // String username = userNameField.getText();
-            // String password = passwordField.getText();
 
-            // 登录验证逻辑可以临时省略
-            // if (loginUser(username, password)) {
-            // 模拟登录成功，跳转到主界面
-            new Home().start(primaryStage); // 启动主界面
-            // } else {
-            // System.out.println("用户名或密码错误！");
-            // }
+            // 获取用户名和密码输入
+            String username = userNameField.getText();
+            Client.name = username;
+            String password = passwordField.getText();
+            String request = "LOGIN"+" "+username+" "+password;
+
+            //发送登录请求
+            sendUtil.sendUTF(request);
+
+            //接收服务器响应
+            String info = receiveUtil.receiveUTF();
+            System.out.println(info);
+
+            //如果成功，则跳转，如果失败则信息框提示
+            if(info.equals("登陆失败"))
+            {
+                System.out.println("用户名或密码错误！");
+            } else
+            {
+
+//                String request2 = "LOAD "+Client.name;
+//                sendUtil.sendUTF(request2);
+
+                String[] load =  info.split(" ");
+                Client.uid =load[0] ;
+                Client.avatarUrl = load[1];
+                //Client.controlTimes =load[2];
+                //Client.goodRatingPercentage = load[3];
+                String[] load1 = load[4].split("#");
+                for (int i = 0 ; i< load1.length;i++){
+                    Client.friendNames.add(load1[i]);
+                }
+
+                System.out.println("个人数据载入到本地");
+                System.out.println(Client.uid +" "+ Client.name+" "+Client.avatarUrl+" "+Client.controlTimes+" "+Client.goodRatingPercentage);
+                //将一部分登录信息存入本地
+//                String sql = "SELECT userid,avatarUrl,controltimes,goodratingpercentage FROM t_users\n" +
+//                        "WHERE username = ?";
+//
+//                ArrayList<Object> arrayList = new ArrayList<>();
+//                arrayList.add(username);
+//                ResultSet resultSet = DbUtil.executeQuery(sql,arrayList);
+//
+//                DbUtil.findAllFriends(DbUtil.getID(username));
+//
+//                Client.name = username;
+
+//                try {
+//                    if(resultSet.next())
+//                    {
+//                        Client.uid = resultSet.getString("userid");
+//                        if(resultSet.getString("avatarUrl")!=null) {
+//                            Client.avatarUrl = resultSet.getString("avatarUrl");
+//                        }
+//                        Client.controlTimes = (resultSet.getInt("controlTimes"));
+//                        Client.goodRatingPercentage = resultSet.getDouble("goodRatingPercentage");
+//
+//                        //测试
+//                        System.out.println("你好");
+//                        System.out.println(Client.uid+Client.avatarUrl+Client.controlTimes+Client.goodRatingPercentage);
+//                    }
+//
+//                    //以后这里还得插入好友信息
+//
+//                } catch (SQLException ex) {
+//                    throw new RuntimeException(ex);
+//                }
+
+                new Home().start(primaryStage); // 启动主界面
+            }
+
         });
 
         // 注册按钮点击事件
         registerButton.setOnAction(e -> {
-            // 注释掉实际的数据库注册代码
-            // String username = userNameField.getText();
-            // String password = passwordField.getText();
+            // 获取用户名和密码输入
+            String username = userNameField.getText();
+            String password = passwordField.getText();
+            String request = "REGISTER"+" "+username+" "+password;
 
-            // if (registerUser(username, password)) {
-            // System.out.println("注册成功！");
-            // } else {
-            // System.out.println("注册失败！");
-            // }
+            sendUtil.sendUTF(request);
+
+
+            //接收服务器响应
+            String info = receiveUtil.receiveUTF();
+            System.out.println(info);
+
+
         });
     }
 
     public static void main(String[] args) {
-        launch();
+        launch(args);
     }
 
     // 注释掉实际的数据库操作方法

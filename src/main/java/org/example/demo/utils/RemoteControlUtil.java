@@ -3,7 +3,6 @@ package org.example.demo.utils;
 import javafx.scene.input.*;
 import org.example.demo.Client;
 
-import java.awt.*;
 import java.awt.event.InputEvent;
 import java.io.Closeable;
 import java.io.IOException;
@@ -45,14 +44,12 @@ public class RemoteControlUtil implements Closeable {
             throw new IllegalArgumentException("MouseEvent cannot be null");
         }
 
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-
         String eventType = e.getEventType().getName(); // Get event type name as a string
         int x = (int) e.getX();
         int y = (int) e.getY();
 
         if (eventType.equals("MOUSE_MOVED") || eventType.equals("MOUSE_DRAGGED"))
-            return "mouseMoved#" + x + "#" + y + "#" + screenSize.width + "#" + screenSize.height;
+            return "mouseMoved#" + x + "#" + y;
         else if (eventType.equals("MOUSE_PRESSED")) {
             int mouseKey = getMouseKey(e.getButton());
             return "mousePressed#" + mouseKey;
