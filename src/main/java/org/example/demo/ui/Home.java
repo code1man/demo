@@ -60,12 +60,12 @@ public class Home extends Application {
     private AnchorPane rightPane; // 使用 AnchorPane 来控制右侧内容块的位置
     private VBox rightContentBox; // 右侧内容块
     private TextField searchField; // 搜索框
-    
+
     public static ImageView userAvatar;
 
     // 用于缓存好友的聊天窗口
     public static void main(String[] args) {
-        launch(args);
+        launch();
     }
 
     @Override
@@ -123,7 +123,7 @@ public class Home extends Application {
         Main.stage = primaryStage;
         primaryStage.setTitle("客户端0.0.1");
         primaryStage.getIcons().add(new Image("logo.jpg"));
-        
+
         // 左侧菜单区域
         VBox leftMenu = new VBox(20); // 将间距设为 20
         leftMenu.setPadding(new Insets(15));
@@ -136,18 +136,18 @@ public class Home extends Application {
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 2, 2);");
 
         leftMenu.setAlignment(Pos.CENTER); // 将内容在VBox中居中对齐
-        
+
         System.out.println(Client.avatarUrl);
 
         File avatarFile = new File(Client.avatarUrl);
-        
+
        // 如果文件存在，加载头像到 ImageView 中
 
         userAvatar = new ImageView(new Image(avatarFile.toURI().toString()));
         Client.updateAvatar(userAvatar);
 
         //ImageView userAvatar = new ImageView(new Image("file:"+Client.avatarUrl));
-        
+
         userAvatar.setFitWidth(100);
         userAvatar.setFitHeight(100);
 
@@ -375,7 +375,7 @@ public class Home extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-    
+
     private HBox createRecommendationItem(String userName) {
         //----------------------------------------------------------------------------
         //先连接
@@ -792,6 +792,7 @@ public class Home extends Application {
                 leftButton.setStyle("-fx-background-color: transparent;"); // 去除按钮默认样式
                 leftButton.setOnAction(e -> openScreenCastingWindow()); // 点击事件，弹出 touping 窗口
 
+
                 // 小标题1：远程投屏
                 Label leftLabel = new Label("远程投屏");
                 leftLabel.setStyle("-fx-font-family: '微软雅黑'; -fx-font-size: 16px; -fx-text-fill: black;");
@@ -871,8 +872,38 @@ public class Home extends Application {
                 // 将整个块添加到rightContentBox中
                 rightContentBox.getChildren().add(remoteCastingBox);
                 break;
+            case "本地设备模块内容":
 
+                rightContentBox.getChildren().clear();
+                VBox vBox1=new VBox();
+                Label label=new Label("设备名称");
+                Label label1=new Label("设备系统");
+                Label label2=new Label("设备地址");
+                label.setAlignment(Pos.CENTER);
+                HBox hBox1=new HBox();
+                hBox1.getChildren().add(label);
+                hBox1.getChildren().add(label1);
+                hBox1.getChildren().add(label2);
+                hBox1.setSpacing(155); // 设置子控件之间的间距为20像素
 
+                // 设置HBox的内边距
+                hBox1.setPadding(new Insets(10, 30, 10, 30)); // 上、右、下、左的内边距
+
+                HBox hBox2=new HBox();
+                Label label3=new Label("LAPTOP-6MTHAU55");
+                Label label4=new Label();
+                Image image=new Image("/windows.png");
+                ImageView imageView=new ImageView(image);
+                label4.setGraphic(imageView);
+                Label label5=new Label("120.227.56.141");
+                hBox2.getChildren().addAll(label3,label4,label5);
+                hBox2.setSpacing(120); // 设置子控件之间的间距为20像素
+
+                // 设置HBox的内边距
+                hBox2.setPadding(new Insets(10, 10, 10, 10)); // 上、右、下、左的内边距
+                vBox1.getChildren().addAll(hBox1,hBox2);
+                rightContentBox.getChildren().add(vBox1);
+                break;
         }
     }
     // 打开 Chat 窗口的方法
@@ -922,7 +953,7 @@ public class Home extends Application {
         }
 
     }
-    
+
     // 新窗口方法：用于显示设备控制的窗口
     private void openControlWindow() {
         Platform.runLater(() -> {
@@ -936,7 +967,7 @@ public class Home extends Application {
             }
         });
     }
-    
+
     // 加载聊天历史的方法，从 txt 文件中读取并返回
     private String loadChatHistory(int id) {
         StringBuilder chatHistory = new StringBuilder();
