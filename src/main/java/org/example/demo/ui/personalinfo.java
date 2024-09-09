@@ -10,17 +10,25 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.example.demo.Client;
+import org.example.demo.utils.TCPReceiveUtil;
+import org.example.demo.utils.TCPSendUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import org.example.demo.Client;
 
 public class personalinfo extends Application {
 
+    private UserInfoListener userInfoListener;
    // private UserInfoListener userInfoListener;
 
     // 自定义构造函数，传递回调接口
     public personalinfo() {
-
     }
 
     @Override
@@ -36,6 +44,56 @@ public class personalinfo extends Application {
         // 头像区域
         Label avatarLabel = new Label("点击替换头像");
         ImageView avatarImageView = new ImageView();
+
+        Client.updateAvatar(avatarImageView);
+
+        avatarLabel.setOnMouseClicked(e -> {
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
+
+                    // 获取当前窗口作为文件选择器的父窗口
+                    Window currentWindow = avatarImageView.getScene().getWindow();
+
+                    // 打开文件选择器，等待用户选择文件
+                    File selectedFile = fileChooser.showOpenDialog(currentWindow);
+
+            if (selectedFile != null) {
+                try {
+                    // 保存头像文件到本地
+
+                    File targetFile = new File( selectedFile.getName());
+
+                    // 将用户选择的文件复制到指定位置
+                    Files.copy(selectedFile.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                    // 将头像路径保存到数据库
+                    Client.avatarUrl = targetFile.getAbsolutePath();
+                    String request = "UPDATEHEAD"+" "+Client.uid+" "+Client.avatarUrl;
+
+                    //由于外部还没有完成连接代码
+                    try {
+                        Client.client = new Socket("127.0.0.1",7777);
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+
+                    TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+                    TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+
+                    sendUtil.sendUTF(request);
+                    System.out.println(receiveUtil.receiveUTF());
+
+                    // 更新ImageView
+                    Image avatarImage = new Image(targetFile.toURI().toString());
+                    avatarImageView.setImage(avatarImage);  // 更新ImageView
+
+                    System.out.println("图片加载成功: " + targetFile.getAbsolutePath());
+                } catch (IOException ex) {
+                    System.out.println("保存图片失败: " + ex.getMessage());
+                }
+            }
+                });
+
         avatarImageView.setFitWidth(100);
         avatarImageView.setFitHeight(100);
         avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px;");
@@ -47,13 +105,18 @@ public class personalinfo extends Application {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
 
+
+            // 获取当前窗口作为文件选择器的父窗口
+            Window currentWindow = avatarImageView.getScene().getWindow();
             // 打开文件选择器，等待用户选择文件
-            File selectedFile = fileChooser.showOpenDialog(null);
+            File selectedFile = fileChooser.showOpenDialog(currentWindow);
+
 
             if (selectedFile != null) {
                 // 如果用户选择了文件，则将其转换为Image
                 Image avatarImage = new Image(selectedFile.toURI().toString());
-                Client.imagePath = selectedFile.getPath();
+
+                Client.avatarUrl = selectedFile.getPath();
                 // 将Image设置给ImageView
                 avatarImageView.setImage(avatarImage);
             }
@@ -125,6 +188,10 @@ public class personalinfo extends Application {
         submitButton.setStyle("-fx-background-color: #4169E1; -fx-border-radius: 15; -fx-background-radius: 15; -fx-text-fill: white;");
         submitButton.setOnAction(e -> {
             // 获取用户输入的数据
+
+            //更新头像
+            Client.updateAvatar(Home.userAvatar);
+
             Client.name = usernameField.getText();
             Client.signature = signatureField.getText();
             Client.sex = genderComboBox.getValue();
@@ -132,10 +199,6 @@ public class personalinfo extends Application {
             Client.country = countryComboBox.getValue();
             Client.province = provinceComboBox.getValue();
 
-/*            // 通过回调函数将数据传回主界面
-            if (userInfoListener != null) {
-                userInfoListener.onUserInfoUpdated(username, signature, gender, birthday, country, province, avatar);
-            }*/
 
             // 关闭修改窗口
             primaryStage.close();

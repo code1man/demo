@@ -15,14 +15,13 @@ public class Main extends Application {
 
     public static LoginController loginController;
     public static Scene scene;
-    public static Stage stage;
+    public  static  Stage stage;
 
     @Override
      public void start(Stage stage) throws IOException {
-        this.stage = stage;
-        //Client.client = new Socket("localhost", 8888);
+        Client.client = new Socket("localhost", 8888);
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("openFlash.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("hello-view.fxml"));
         Parent root = loader.load();
         scene = new Scene(root, 640, 480);
 
@@ -31,7 +30,7 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        launch();
+        launch(LoginApp.class);
     }
 
     public static void setRoot(String fxml) throws IOException {
