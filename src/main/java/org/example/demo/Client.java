@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
-//import static org.example.demo.Main.loginController;
+import static org.example.demo.ui.Home.controlWindow;
 
 public class Client {
 
@@ -46,11 +46,16 @@ public class Client {
     public static String signature = "摆烂";
 
     public static Socket client = null;
-    public static Socket secondClient = null;
+    public static Socket RemoteControlClient = null;
+    public static Socket friendClient = null;
+    public static Socket CameraClient = null;
 
-    private Thread recieveImgThread;
-    private Thread sendImgThread;
-    private Thread robotThread;
+
+    private static Thread recieveImgThread;
+    private static Thread sendImgThread;
+    private static Thread robotThread;
+    private Thread friendResultThread;
+    private Thread friendThread;
 
     public static Map<String, Stage> chatWindows = new HashMap<>();
 
@@ -85,7 +90,7 @@ public class Client {
                 ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
                 try {
                     BufferedImage image = ImageIO.read(bais);
-                    //loginController.updateImage(image);
+                    controlWindow.updateImage(image);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -93,7 +98,7 @@ public class Client {
         });
 
         robotThread = new Thread(()->{
-            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.secondClient);
+            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.RemoteControlClient);
             try {
                 Robot robot = new Robot();
 
@@ -159,26 +164,48 @@ public class Client {
                 throw new RuntimeException(e);
             }
         });
+
+        friendThread = new Thread(()->{
+
+        });
+
+        friendResultThread = new Thread(()->{
+            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.friendClient);
+            while (true) {
+                String friendReply = receiveUtil.receiveUTF();
+                if (friendReply != null && friendReply.contains(":")) {
+                    String[] reply = friendReply.split(":");
+                    if (reply[1].equals("同意")) {
+                        Client.friendNumb++;
+                        Client.friendNames.add(reply[0]);
+                        // 弹出好友同意的窗口
+                    } else if (reply[1].equals("拒绝")) {
+                        // 弹出好友不同意的窗口
+                    }
+                }
+            }
+        });
     }
 
-    public void startRemoteHash() {
+    public static void startRemoteHash() {
         sendImgThread.start();
+    }
+
+    public static void recieveRemoteHash() {
         recieveImgThread.start();
     }
 
-    public void startRemoteControl(){
+    public static void startRemoteControl(){
         sendImgThread.start();
-        recieveImgThread.start();
         robotThread.start();
     }
 
-    public void stopRemoteControl(){
+    public static void stopRemoteControl(){
         sendImgThread.interrupt();
-        recieveImgThread.interrupt();
         robotThread.interrupt();
     }
 
-    public void stopRemoteHash(){
+    public static void stopRemoteHash(){
         sendImgThread.interrupt();
         recieveImgThread.interrupt();
     }

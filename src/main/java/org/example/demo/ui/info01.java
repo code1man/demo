@@ -11,12 +11,16 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import org.example.demo.Client;
+import org.example.demo.Main;
+import org.example.demo.utils.TCPSendUtil;
 
 import static javafx.application.Application.launch;
 
+//远程投屏
 public class info01 {
     public void start(Stage primaryStage) {
-        primaryStage.getIcons().add(new Image("logo.jpg"));
+        primaryStage.getIcons().add(new Image("/logo.jpg"));
         // 设置申请远程控制的用户（可以从数据库中获取）
         String requesterName = "XXXX"; // 以后从数据库中获取用户的名字
 
@@ -45,12 +49,16 @@ public class info01 {
         acceptButton.setOnAction(event -> {
             System.out.println("用户同意了远程投屏");
             // 可以在这里添加处理同意远程控制的逻辑
+            new TCPSendUtil(Client.RemoteControlClient).sendUTF("同意");
+            new yuanchengkongzhi01().start(Main.stage);
+            Client.startRemoteControl();
         });
 
         rejectButton.setOnAction(event -> {
             System.out.println("用户拒绝了远程投屏");
             // 可以在这里添加处理拒绝远程控制的逻辑
             primaryStage.close(); // 拒绝后关闭窗口
+            new TCPSendUtil(Client.RemoteControlClient).sendUTF("拒绝");
         });
 
         // 创建水平布局放置按钮

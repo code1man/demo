@@ -12,18 +12,12 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-
 import org.example.demo.Client;
-import org.example.demo.Server;
-import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 
 public class LoginApp extends Application {
 
@@ -177,20 +171,24 @@ public class LoginApp extends Application {
             if(info.equals("登陆失败"))
             {
                 System.out.println("用户名或密码错误！");
-            } else
-            {
+            }
+            else {
 
-//                String request2 = "LOAD "+Client.name;
-//                sendUtil.sendUTF(request2);
+//              String request2 = "LOAD "+Client.name;
+//              sendUtil.sendUTF(request2);
 
                 String[] load =  info.split(" ");
                 Client.uid =load[0] ;
-                Client.avatarUrl = load[1];
+                if (load.length > 2)
+                    Client.avatarUrl = load[1];
                 //Client.controlTimes =load[2];
                 //Client.goodRatingPercentage = load[3];
-                String[] load1 = load[4].split("#");
-                for (int i = 0 ; i< load1.length;i++){
-                    Client.friendNames.add(load1[i]);
+                if (load.length == 5) {
+                    String[] load1 = load[4].split("#");
+
+                    for (int i = 0; i < load1.length; i++) {
+                        Client.friendNames.add(load1[i]);
+                    }
                 }
 
                 System.out.println("个人数据载入到本地");

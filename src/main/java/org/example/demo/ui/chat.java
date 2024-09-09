@@ -1,27 +1,35 @@
 package org.example.demo.ui;
 
 import javafx.application.Application;
+<<<<<<< HEAD
 
 import javafx.application.Platform;
+=======
+>>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+<<<<<<< HEAD
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
+=======
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+>>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
 import javafx.stage.Stage;
-
 import org.example.demo.Client;
+import org.example.demo.ui.Chat_add.Sender;
+import org.example.demo.ui.Chat_add.VoiceCallClient;
+import org.example.demo.utils.CameraUtil;
 import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
-import javax.swing.text.Utilities;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -32,36 +40,20 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import org.example.demo.ui.Chat_add.*;
-import javafx.application.Application;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Button;
-import javafx.scene.layout.VBox;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.stage.Stage;
-
-import java.io.IOException;
 public class chat extends Application {
     private TextArea chatArea = new TextArea();
     private String username;
     private Button sendButton;
     private Button voiceCall;
+    private Button videoCall;
     private TextField messageInput;
     private Sender sender;
+    private CameraUtil cameraUtil;
     private VBox chatBox;
     private VBox nameBox;
     private Sender sender_call;
+
 
     private String friendName;
     public chat(String username,String friendName) {
@@ -69,9 +61,13 @@ public class chat extends Application {
         this.friendName = friendName;
         //可能要改成数据库中记录的用户名
     }
+<<<<<<< HEAD
     public chat(){           //需要有一个无参的构造函数
 
     }
+=======
+
+>>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
     public void initialize() {
         try {
             sender_call = new Sender("localhost", 9999);
@@ -230,7 +226,7 @@ public class chat extends Application {
 
             String  hostID = Client.uid;
 
-            String request = "VOICECHAT"+" "+hostID+" "+DbUtil.getID(friendName);
+            String request = "VOICECHAT"+" "+hostID+" "+ DbUtil.getID(friendName);
 
 
             sendUtil.sendUTF(request);
@@ -248,6 +244,39 @@ public class chat extends Application {
             voiceCall.setText("发起语音通话");
         }
     }
+
+    public void videoCall(ActionEvent actionEvent) {
+        if (!VoiceCallClient.isCalling) {
+            initiateVoiceCall();
+            videoCall.setText("挂断视频通话");
+        } else {
+            terminateVoiceCall();
+            videoCall.setText("发起视频通话");
+        }
+    }
+
+    private void initiateVideoCall() {
+        System.out.println("发起视频通话...");
+        // 设置正在视频通话
+        VoiceCallClient.isCalling = true;
+        CameraUtil.isCalling = true;
+
+        cameraUtil = new CameraUtil();
+        // 启动客户端的音频捕获和发送逻辑
+        try {
+            new Thread(() -> {
+                try {
+                    VoiceCallClient.main(null); // 启动音频捕获和接收线程
+                    cameraUtil.openVideoModule();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void initiateVoiceCall() {
         System.out.println("发起语音通话...");
         // 设置为正在通话状态
@@ -277,6 +306,23 @@ public class chat extends Application {
         try {
             if (VoiceCallClient.socket != null && !VoiceCallClient.socket.isClosed()) {
                 VoiceCallClient.socket.close();
+                System.out.println("Socket连接已关闭");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void terminateVideoCall() {
+        System.out.println("结束视频通话...");
+
+        VoiceCallClient.isCalling = false;
+        CameraUtil.isCalling = false;
+
+        try {
+            if (VoiceCallClient.socket != null && !VoiceCallClient.socket.isClosed()) {
+                VoiceCallClient.socket.close();
+                cameraUtil.closeVideoModule();
                 System.out.println("Socket连接已关闭");
             }
         } catch (IOException e) {
@@ -314,26 +360,20 @@ public class chat extends Application {
         chatScrollPane.setPrefHeight(400);
         // 工具栏，包含视频通话和语音通话
         HBox toolbar = new HBox(10); // 10 为按钮之间的间距
-        Button videoCall = new Button("视频通话");
-
+        videoCall = new Button("视频通话");
         voiceCall = new Button("语音通话");
-
         toolbar.getChildren().addAll(videoCall, voiceCall);
         toolbar.setStyle("-fx-padding: 5; -fx-border-color: black; -fx-border-radius: 5;");
 
         // 发送消息框 (淡蓝色背景，有弧度)
-
         messageInput = new TextField();
-
         messageInput.setPromptText("请输入信息发送");
         messageInput.setStyle("-fx-background-color: lightblue; -fx-background-radius: 10; -fx-border-radius: 10;");
         messageInput.setPrefHeight(40); // 设置输入框的高度
         messageInput.setPrefWidth(450); // 设置输入框的宽度
 
         // 发送按钮 (深蓝色背景，弧度按钮)
-
         sendButton = new Button("发送信息");
-
         sendButton.setStyle("-fx-background-color: darkblue; -fx-text-fill: white; -fx-background-radius: 10;");
         sendButton.setPrefSize(100, 40); // 设置按钮大小
 
@@ -354,13 +394,11 @@ public class chat extends Application {
                     ResultSet resultSet = DbUtil.executeQuery(sql,arrayList);
                     String request = "";
 
-
-
                     if(resultSet.next()) {
                         String receiver = resultSet.getString("userid");
                         //还没弄入文件
                         String messageText = message;
-                      request = "INFORMATION"+" "+sender+" "+receiver+" "+messageText;
+                        request = "INFORMATION"+" "+sender+" "+receiver+" "+messageText;
                     }
 
                     try {
@@ -391,6 +429,7 @@ public class chat extends Application {
             }
         });
 
+<<<<<<< HEAD
         voiceCall.setOnAction(
                 actionEvent -> {
                     sender_call.sendMessage("1");       //传递一串特殊字符用于表示点击事件
@@ -398,6 +437,10 @@ public class chat extends Application {
                 }
         );
 
+=======
+        voiceCall.setOnAction(this::call);
+        videoCall.setOnAction(this::call);
+>>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
 
         // 底部的消息输入和发送按钮布局
         HBox messageBox = new HBox(10); // 10 为输入框和按钮之间的间距
@@ -415,9 +458,7 @@ public class chat extends Application {
 
         // 场景设置，调整页面大小
         Scene scene = new Scene(root, 600, 550); // 调整页面大小为 800x600
-
-        //primaryStage.setTitle("聊天窗口");
-
+        primaryStage.setTitle("聊天窗口");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -443,7 +484,4 @@ public class chat extends Application {
     public TextArea getChatArea() {
         return chatArea;
     }
-
-
-
 }

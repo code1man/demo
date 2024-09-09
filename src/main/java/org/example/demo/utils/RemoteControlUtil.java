@@ -1,17 +1,28 @@
 package org.example.demo.utils;
 
 import javafx.scene.input.*;
+import org.example.demo.Client;
 
 import java.awt.event.InputEvent;
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
 //远程操控
-public class RemoteControlUtil{
+public class RemoteControlUtil implements Closeable {
 
     private final Map<KeyCode, Integer> keyCodeMap;
+    private final String HOST_ADDRESS = "localhost";
+    private final int HOST_PORT = 8888;
 
     public RemoteControlUtil() {
+        try {
+            Client.RemoteControlClient = new Socket(HOST_ADDRESS,HOST_PORT);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         keyCodeMap = new HashMap<>();
         initializeKeyCodeMap();
     }
@@ -162,6 +173,13 @@ public class RemoteControlUtil{
         keyCodeMap.put(KeyCode.PERIOD, java.awt.event.KeyEvent.VK_PERIOD);
         keyCodeMap.put(KeyCode.SLASH, java.awt.event.KeyEvent.VK_SLASH);
         keyCodeMap.put(KeyCode.BACK_SLASH, java.awt.event.KeyEvent.VK_BACK_SLASH);
+    }
+
+
+    @Override
+    public void close() throws IOException {
+        if (Client.RemoteControlClient != null)
+            Client.RemoteControlClient.close();
     }
 }
 

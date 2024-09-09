@@ -5,7 +5,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.example.demo.controller.LoginController;
 import org.example.demo.ui.LoginApp;
 
 import java.io.IOException;
@@ -13,7 +12,6 @@ import java.net.Socket;
 
 public class Main extends Application {
 
-    public static LoginController loginController;
     public static Scene scene;
     public  static  Stage stage;
 
@@ -21,12 +19,13 @@ public class Main extends Application {
      public void start(Stage stage) throws IOException {
         Client.client = new Socket("localhost", 8888);
 
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("hello-view.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("shenqing.fxml"));
         Parent root = loader.load();
         scene = new Scene(root, 640, 480);
 
         stage.setScene(scene);
         stage.show();
+
     }
 
     public static void main(String[] args) {

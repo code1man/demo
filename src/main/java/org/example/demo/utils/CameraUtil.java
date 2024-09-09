@@ -7,12 +7,12 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.Socket;
 
-import static org.example.demo.Main.loginController;
 
 // 视频聊天获取摄像头
 public class CameraUtil {
-
+    public static boolean isCalling = false;
     private final Webcam webcam;
     private final TCPSendUtil tcpSendUtil;
     private final TCPReceiveUtil tcpReceiveUtil;
@@ -20,16 +20,17 @@ public class CameraUtil {
     private final Thread RecieveVideoThread;
     private final Thread SendVideoThread;
 
+    private final String SERVER_ADDRESS = "localhost";
+    private final int SERVER_PORT = 8888;
 
     public CameraUtil() {
         // get default webcam and open it获取网络摄像头设置并打开
         webcam = Webcam.getDefault();
-        tcpReceiveUtil = new TCPReceiveUtil(Client.client);
-        tcpSendUtil = new TCPSendUtil(Client.client);
-
+        tcpReceiveUtil = new TCPReceiveUtil(Client.CameraClient);
+        tcpSendUtil = new TCPSendUtil(Client.CameraClient);
 
         RecieveVideoThread = new Thread(()->{
-            while(true) {
+            while(isCalling) {
                 // get image获取图片
                 BufferedImage bufferedImage = webcam.getImage();
                 byte[] image = tcpSendUtil.getImageBytes(bufferedImage);
@@ -38,12 +39,12 @@ public class CameraUtil {
         });
 
         SendVideoThread = new Thread(()->{
-            while(true) {
+            while(isCalling) {
                 byte[] imageData = tcpReceiveUtil.receiveImg();
                 ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
                 try {
                     BufferedImage image = ImageIO.read(bais);
-                    loginController.updateImage(image);
+                    //loginController.updateImage(image);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -53,16 +54,25 @@ public class CameraUtil {
 
     //打开摄像头
     public void openVideoModule() {
-        webcam.open();
-        SendVideoThread.start();
-        RecieveVideoThread.start();
+        try {
+            Client.CameraClient = new Socket(SERVER_ADDRESS,SERVER_PORT);
+            webcam.open();
+            SendVideoThread.start();
+            RecieveVideoThread.start();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     //关闭摄像头
     public void closeVideoModule() {
-        webcam.close();
-        SendVideoThread.interrupt();
-        RecieveVideoThread.interrupt();
-
+        try {
+            Client.CameraClient.close();
+            webcam.close();
+            SendVideoThread.interrupt();
+            RecieveVideoThread.interrupt();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

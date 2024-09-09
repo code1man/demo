@@ -2,25 +2,45 @@ package org.example.demo.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
 import javafx.stage.Modality;
-import javafx.geometry.Pos;
-import javafx.scene.image.Image;
-import javafx.scene.input.KeyCode;
+import javafx.stage.Stage;
+import org.example.demo.Client;
+import org.example.demo.utils.RemoteControlUtil;
+import org.example.demo.utils.TCPSendUtil;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 public class yuanchengkongzhi extends Application {
 
     private int seconds = 0; // 计时器的秒数
     private Label timerLabel = new Label("远程控制时间: 0 秒");
     private boolean isIcon1 = true; // 用于图标切换的标志位
+    private ImageView imageView;
+    private RemoteControlUtil remoteControlUtil;
+    private TCPSendUtil tcpSendUtil;
+
+    //private RemoteControlUtil remoteControlUtil = new RemoteControlUtil();
 
     @Override
     public void start(Stage primaryStage) {
+        remoteControlUtil = new RemoteControlUtil();
+        tcpSendUtil = new TCPSendUtil(Client.RemoteControlClient);
+
         primaryStage.getIcons().add(new Image("logo.jpg"));
 
         // 设置全屏
@@ -43,9 +63,26 @@ public class yuanchengkongzhi extends Application {
         // 投屏框 (黑色背景)，比例增大
         Pane screenPane = new Pane();
         screenPane.setStyle("-fx-background-color: black; -fx-border-color: pink; -fx-border-width: 2;");
-        screenPane.setPrefSize(1400, 900); // 增加宽度和高度
+        screenPane.setPrefSize(1400, 1000); // 增加宽度和高度
+
+        // 创建 ImageView
+        imageView = new ImageView();
+        imageView.setFitWidth(1400); // 设置图像宽度
+        imageView.setFitHeight(1000); // 设置图像高度
+        imageView.setPreserveRatio(true); // 保持图像比例
+
+        screenPane.getChildren().add(imageView);
 
         VBox.setVgrow(screenPane, Priority.ALWAYS); // 让黑色区域占据更多的垂直空间
+
+        screenPane.setOnMouseClicked(this::handleEvent);
+        screenPane.setOnMouseMoved(this::handleEvent);
+        screenPane.setOnMouseDragged(this::handleEvent);
+        screenPane.setOnMousePressed(this::handleEvent);
+        screenPane.setOnMouseReleased(this::handleEvent);
+        screenPane.setOnScroll(this::handleEvent);
+        screenPane.setOnKeyPressed(this::handleEvent);
+        screenPane.setOnKeyReleased(this::handleEvent);
 
         // 菜单栏，包含计时器、结束按钮和图片按钮
         HBox menuBar = new HBox(20);
@@ -53,9 +90,14 @@ public class yuanchengkongzhi extends Application {
         // 结束远程控制按钮
         Button stopButton = new Button("结束远程控制");
         stopButton.setOnAction(e -> {
-            // 停止投屏，并弹出评分窗口
             primaryStage.close(); // 关闭投屏窗口
-            showRatingWindow();   // 弹出评分窗口
+            //showRatingWindow();   // 弹出评分窗口
+            try {
+                remoteControlUtil.close();
+                Client.stopRemoteHash();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         });
 
         // 加载两个图标图片
@@ -120,6 +162,8 @@ public class yuanchengkongzhi extends Application {
         primaryStage.setTitle("远程控制窗口");
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        Client.recieveRemoteHash();
     }
 
     // 弹出评分窗口
@@ -149,6 +193,28 @@ public class yuanchengkongzhi extends Application {
         Scene ratingScene = new Scene(ratingBox, 300, 350);
         ratingStage.setScene(ratingScene);
         ratingStage.show();
+    }
+
+    public void updateImage(BufferedImage bufferedImage) {
+        if (bufferedImage != null)
+        {
+            Image javafxImage = SwingFXUtils.toFXImage(bufferedImage, null);
+            imageView.setImage(javafxImage);
+        }
+    }
+
+    private void handleEvent(javafx.event.Event e) {
+        String result;
+        if (e instanceof MouseEvent) {
+            result = remoteControlUtil.mouseEvent((MouseEvent) e);
+        } else if (e instanceof ScrollEvent) {
+            result = remoteControlUtil.mouseWheelEvent((ScrollEvent) e);
+        } else if (e instanceof KeyEvent) {
+            result = remoteControlUtil.keyEvent((KeyEvent) e);
+        } else {
+            throw new IllegalArgumentException("Unsupported event type: " + e.getEventType());
+        }
+        tcpSendUtil.sendUTF(result);
     }
 
     public static void main(String[] args) {

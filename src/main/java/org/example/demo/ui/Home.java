@@ -2,26 +2,24 @@ package org.example.demo.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-
-import javafx.beans.property.StringProperty;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
-
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.example.demo.Client;
+import org.example.demo.Main;
+import org.example.demo.controller.shenqingController;
 import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
@@ -31,22 +29,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import javafx.scene.text.Text;
-import javafx.stage.FileChooser;
-import javafx.stage.Popup;
-import javafx.stage.Stage;
-import javafx.stage.Window;
-import org.example.demo.Client;
-import org.example.demo.Main;
-
-import java.io.File;
-import java.io.IOException;
 
 
 public class Home extends Application {
@@ -61,7 +43,11 @@ public class Home extends Application {
     private VBox rightContentBox; // 右侧内容块
     private TextField searchField; // 搜索框
 
+    private Thread receiveApplyThread;
+
     public static ImageView userAvatar;
+    public static yuanchengkongzhi controlWindow; //远程控制方便更改ImageView
+    // 远程投屏是用fxml写的，名字是 TencentMeeting
 
     // 用于缓存好友的聊天窗口
     public static void main(String[] args) {
@@ -70,8 +56,6 @@ public class Home extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-
-
         //先连接
         try {
             Client.client = new Socket("127.0.0.1",7777);
@@ -81,44 +65,49 @@ public class Home extends Application {
 
         TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
-//
+
         new Thread(()->{
             String request2 = "SHOWPENDINGFRIENDS " +Client.uid;
             sendUtil.sendUTF(request2);
-            System.out.println(receiveUtil.receiveUTF());
+            System.out.println(request2);
+
+            String s = receiveUtil.receiveUTF();
+            if (!s.isEmpty()) {
+                String[] info = s.split("#");
+                Platform.runLater(() -> {
+                    for (int i = 1; i <= info.length; i++) {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/demo/shenqing.fxml"));
+                        Parent root = null;
+                        try {
+                            root = loader.load();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        Popup popup = new Popup();
+                        popup.getContent().add(root);
+
+                        // Calculate popup position
+                        double screenWidth = primaryStage.getWidth();
+                        double screenHeight = primaryStage.getHeight();
+                        double popupWidth = 100;  // Adjust as needed
+                        double popupHeight = 100;
+
+                        // Position the popup in the bottom-right corner
+                        double popupX = screenWidth - popupWidth - 10; // Margin from screen edge
+                        double popupY = screenHeight - popupHeight - 10; // Margin from screen edge
+                        // 从服务器数据库读来的数据
+                        shenqingController controller = loader.getController();
+                        controller.updateLabels(info[i - 1], "/touxiang.png");
+                        controller.setPopup(popup);
+
+                        // Position the popup near the button (e.g., bottom-right)
+                        popup.show(primaryStage, popupX, popupY);
+                    }
+                });
+            }
         }
         ).start();
-
-
-        Button applyButton = new Button("申请");
-        Button acceptButton =  new Button("接受");
-        Button refuseButton =  new Button("拒绝");
-
-        acceptButton.setOnAction(ev->{
-            String friendName = "";//这里后面要改从消息列表上取
-            String request = "ADDFRIENDS"+" "+"accepted"+" "+Client.uid+" "+friendName;
-
-            sendUtil.sendUTF(request);
-
-            Client.friendNames.add(receiveUtil.receiveUTF()) ;
-
-        });
-
-        applyButton.setOnAction(ev->{
-
-
-        });
-
-        refuseButton.setOnAction(ev->{
-            String friendName = "";     //这里后面要改，从检索出来的消息列表取
-
-            String request = "ADDFRIENDS"+" "+"blocked"+" "+Client.uid+" "+friendName;
-
-            sendUtil.sendUTF(request);
-
-            System.out.println(receiveUtil.receiveUTF());
-
-        });
 
         Main.stage = primaryStage;
         primaryStage.setTitle("客户端0.0.1");
@@ -256,8 +245,8 @@ public class Home extends Application {
         // 使用 AnchorPane 放置右侧内容块
         rightPane = new AnchorPane();
         rightPane.getChildren().add(rightContentBox);
-        AnchorPane.setRightAnchor(rightContentBox, 10.0); // 右侧距离
-        AnchorPane.setTopAnchor(rightContentBox, 30.0);   // 顶部距离
+        AnchorPane.setRightAnchor(rightContentBox, Double.valueOf(10.0)); // 右侧距离
+        AnchorPane.setTopAnchor(rightContentBox, Double.valueOf(30.0));   // 顶部距离
 
         root.setCenter(rightPane); // 将右侧内容区域设置到 BorderPane 的中心位置
 
@@ -349,13 +338,21 @@ public class Home extends Application {
                 recommendationList.setPrefWidth(searchField.getWidth());
                 recommendationPopup.show(window, window.getX() + searchField.localToScene(0, 0).getX() + searchField.getScene().getX(),
                         window.getY() + searchField.localToScene(0, 0).getY() + searchField.getHeight() + searchField.getScene().getY());
-            }
+            } else
+                recommendationPopup.hide();
         });
 
 // 确保点击其他地方关闭推荐框
         root.setOnMouseClicked(e -> {
-            if (!searchField.isFocused() && recommendationPopup.isShowing()) {
-                recommendationPopup.hide();
+            if (recommendationPopup.isShowing()) {
+                Bounds popupBounds = recommendationPopup.getContent().get(0).localToScreen(
+                        recommendationPopup.getContent().get(0).getBoundsInLocal()
+                );
+                Point2D clickPoint = new Point2D(e.getScreenX(), e.getScreenY());
+
+                if (!popupBounds.contains(clickPoint)) {
+                    recommendationPopup.hide();
+                }
             }
         });
 
@@ -374,6 +371,63 @@ public class Home extends Application {
         Main.scene = scene;
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        receiveApplyThread = new Thread( ()-> {
+            TCPReceiveUtil tcpReceiveUtil = new TCPReceiveUtil(Client.client);
+            while (true) {
+                String message = tcpReceiveUtil.receiveUTF();
+                System.out.println(message);
+                if (message != null) {
+                    processMessage(message);
+                }
+            }
+        });
+        receiveApplyThread.start();
+//
+    }
+
+    private void processMessage(String message) {
+        Platform.runLater(() -> {
+            try {
+                String[] info = message.split("#");
+                if (info.length > 0) {
+                    if (info[0].equals("padding")) {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("popup.fxml"));
+                        Pane root;
+                        try {
+                            root = loader.load();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+
+                        Popup popup = new Popup();
+                        popup.getContent().add(root);
+
+                        double screenWidth = Main.stage.getWidth();
+                        double screenHeight = Main.stage.getHeight();
+                        double popupWidth = root.getPrefWidth();
+                        double popupHeight = root.getPrefHeight();
+
+                        double popupX = screenWidth - popupWidth - 10; // Margin from screen edge
+                        double popupY = screenHeight - popupHeight - 10; // Margin from screen edge
+
+                        shenqingController controller = loader.getController();
+                        controller.setPopup(popup); // Pass the popup to the controller
+                        controller.updateLabels(info[1], "/touxiang.png"); // Example data
+
+                        popup.show(root, popupX, popupY);
+                    } else if (info[0].equals("ACCEPT")) {
+                        // Handle "ACCEPT" case
+                        Client.friendNames.add(info[1]);
+                    } else if (info[0].equals("REJECT")) {
+                        System.out.println("你被" + info[1] + "拒绝了");
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private HBox createRecommendationItem(String userName) {
@@ -439,7 +493,7 @@ public class Home extends Application {
         ImageView avatarImageView = new ImageView();
         avatarImageView.setFitWidth(100);
         avatarImageView.setFitHeight(100);
-        avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px;");
+        avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px; -fx-start-margin: 10; -fx-end-margin: 20");
 
         // 创建头像框布局，放置在用户信息上方
         VBox avatarBox = new VBox(10);
@@ -668,7 +722,6 @@ public class Home extends Application {
                         "-fx-border-radius: 15; " + // 设置弧形边框
                         "-fx-background-radius: 15;"); // 设置背景弧形边框
 
-
                 // 创建一个主 VBox，用于放置搜索框和滑动框
                 VBox mainBox = new VBox(10);
                 mainBox.getChildren().addAll(searchBox, scrollPane);
@@ -701,6 +754,8 @@ public class Home extends Application {
 
                 VBox vBox = new VBox(10);
                 vBox.setAlignment(Pos.CENTER_LEFT);
+                vBox.setSpacing(10);
+                vBox.setPadding(new Insets(20, 0, 0, 10));
 
                 Button editInfoButton = new Button("修改信息");
 
@@ -708,6 +763,8 @@ public class Home extends Application {
                 HBox hBox = new HBox(10);
                 hBox.setAlignment(Pos.CENTER_LEFT);
                 hBox.getChildren().addAll(profileImageView, vBox);
+
+                hBox.setPadding(new Insets(10));
 
                 Pane pane = new Pane();
                 pane.getChildren().add(hBox);
@@ -783,7 +840,6 @@ public class Home extends Application {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 2, 2);");
 
                 // 图片按钮1：远程投屏
-                // 图片按钮1：远程投屏
                 ImageView leftImage = new ImageView(new Image(getClass().getResourceAsStream("/touping.png")));
                 leftImage.setFitWidth(100);
                 leftImage.setFitHeight(100);
@@ -803,7 +859,6 @@ public class Home extends Application {
                 leftBox.getChildren().addAll(leftButton, leftLabel);
 
                 // 图片按钮2：远程控制
-                // 图片按钮2：远程控制
                 ImageView rightImage = new ImageView(new Image(getClass().getResourceAsStream("/yuanchengkongzhi.png")));
                 rightImage.setFitWidth(100);
                 rightImage.setFitHeight(100);
@@ -811,7 +866,6 @@ public class Home extends Application {
                 rightButton.setGraphic(rightImage);
                 rightButton.setStyle("-fx-background-color: transparent;");
                 rightButton.setOnAction(e -> openControlWindow()); // 点击事件，弹出 yuanchengkongzhi 窗口
-
 
                 // 小标题2：远程控制
                 Label rightLabel = new Label("远程控制");
@@ -906,6 +960,7 @@ public class Home extends Application {
                 break;
         }
     }
+
     // 打开 Chat 窗口的方法
 
     private void openChatWindow(String friendname) {
@@ -945,7 +1000,6 @@ public class Home extends Application {
 
     // 新窗口方法：用于显示屏幕投屏的窗口
     private void openScreenCastingWindow() {
-
         try {
             Main.setRoot("TencentMeeting");
         } catch (IOException e) {
@@ -959,7 +1013,7 @@ public class Home extends Application {
         Platform.runLater(() -> {
             try {
                 // 创建 yuanchengkongzhi 窗口的实例并启动
-                yuanchengkongzhi controlWindow = new yuanchengkongzhi();
+                controlWindow = new yuanchengkongzhi();
                 Stage controlStage = new Stage();
                 controlWindow.start(controlStage); // 启动 yuanchengkongzhi 窗口
             } catch (Exception ex) {
@@ -986,4 +1040,5 @@ public class Home extends Application {
 
         return chatHistory.toString();
     }
+
 }
