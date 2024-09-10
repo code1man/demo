@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+<Pane style="-fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-width: 2px; -fx-border-radius: 10px; -fx-background-radius: 10px; -fx-padding: 5px; -fx-font-size: 14px; -fx-pref-width: 300px;-fx-pref-height: 120px;"
+      xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.demo.controller.shenqingController">
+   <HBox alignment="CENTER_LEFT" spacing="10.0">
+      <ImageView fx:id="profileImageView" fitWidth="100.0" fitHeight="100.0" preserveRatio="true">
+         <Image url="/touxiang.png"/>
+      </ImageView>
+      <VBox alignment="CENTER_LEFT" spacing="10.0">
+         <Label fx:id="usernameLabel" text="用户名: "/>
+         <Button fx:id="yesButton" text="接受"/>
+         <Button fx:id="noButton" text="拒绝"/>
+      </VBox>
+   </HBox>
+</Pane>

@@ -129,7 +129,7 @@ public class personalinfo extends Application {
 
         // 用户名区域
         Label usernameLabel = new Label("用户名:");
-        TextField usernameField = new TextField();
+        TextField usernameField = new TextField(Client.name);
         usernameField.setPromptText("请输入用户名");
         usernameField.setStyle(commonStyle);
         HBox usernameBox = new HBox(10, usernameLabel, usernameField);
@@ -160,28 +160,38 @@ public class personalinfo extends Application {
         HBox birthdayBox = new HBox(10, birthdayLabel, birthdayField);
         birthdayBox.setAlignment(Pos.CENTER_LEFT);
 
-        // 国家选择区域
-        Label countryLabel = new Label("国家:");
-        ComboBox<String> countryComboBox = new ComboBox<>();
-        countryComboBox.getItems().addAll("中国", "日本", "韩国", "德国", "英国", "法国", "俄罗斯", "美国", "澳大利亚", "加拿大", "其他");
-        countryComboBox.setPromptText("请选择国家");
-        countryComboBox.setStyle(commonStyle);
-        HBox countryBox = new HBox(10, countryLabel, countryComboBox);
-        countryBox.setAlignment(Pos.CENTER_LEFT);
+        Label controlTimes1 = new Label("操控次数:");
+        Label controlTimes2 = new Label(""+Client.controlTimes);
+        HBox controlTimeBox = new HBox(10, controlTimes1, controlTimes2);
+        controlTimeBox.setAlignment(Pos.CENTER_LEFT);
 
-        // 省份选择区域
-        Label provinceLabel = new Label("省份:");
-        ComboBox<String> provinceComboBox = new ComboBox<>();
-        provinceComboBox.getItems().addAll(
-                "北京市", "天津市", "上海市", "重庆市", "河北省", "山西省", "辽宁省", "吉林省", "黑龙江省",
-                "江苏省", "浙江省", "安徽省", "福建省", "江西省", "山东省", "河南省", "湖北省", "湖南省",
-                "广东省", "海南省", "四川省", "贵州省", "云南省", "陕西省", "甘肃省", "青海省", "台湾省",
-                "内蒙古自治区", "广西壮族自治区", "西藏自治区", "宁夏回族自治区", "新疆维吾尔自治区", "香港特别行政区", "澳门特别行政区"
-        );
-        provinceComboBox.setPromptText("请选择省份");
-        provinceComboBox.setStyle(commonStyle);
-        HBox provinceBox = new HBox(10, provinceLabel, provinceComboBox);
-        provinceBox.setAlignment(Pos.CENTER_LEFT);
+        Label goodRatingPercentage1 = new Label("好评率:");
+        Label goodRatingPercentage2 = new Label(""+Client.goodRatingPercentage);
+        HBox goodRatingPercentageBox = new HBox(10, goodRatingPercentage1, goodRatingPercentage2);
+        goodRatingPercentageBox.setAlignment(Pos.CENTER_LEFT);
+
+        // 国家选择区域
+//        Label countryLabel = new Label("国家:");
+//        ComboBox<String> countryComboBox = new ComboBox<>();
+//        countryComboBox.getItems().addAll("中国", "日本", "韩国", "德国", "英国", "法国", "俄罗斯", "美国", "澳大利亚", "加拿大", "其他");
+//        countryComboBox.setPromptText("请选择国家");
+//        countryComboBox.setStyle(commonStyle);
+//        HBox countryBox = new HBox(10, countryLabel, countryComboBox);
+//        countryBox.setAlignment(Pos.CENTER_LEFT);
+//
+//        // 省份选择区域
+//        Label provinceLabel = new Label("省份:");
+//        ComboBox<String> provinceComboBox = new ComboBox<>();
+//        provinceComboBox.getItems().addAll(
+//                "北京市", "天津市", "上海市", "重庆市", "河北省", "山西省", "辽宁省", "吉林省", "黑龙江省",
+//                "江苏省", "浙江省", "安徽省", "福建省", "江西省", "山东省", "河南省", "湖北省", "湖南省",
+//                "广东省", "海南省", "四川省", "贵州省", "云南省", "陕西省", "甘肃省", "青海省", "台湾省",
+//                "内蒙古自治区", "广西壮族自治区", "西藏自治区", "宁夏回族自治区", "新疆维吾尔自治区", "香港特别行政区", "澳门特别行政区"
+//        );
+//        provinceComboBox.setPromptText("请选择省份");
+//        provinceComboBox.setStyle(commonStyle);
+//        HBox provinceBox = new HBox(10, provinceLabel, provinceComboBox);
+//        provinceBox.setAlignment(Pos.CENTER_LEFT);
 
         // 确认修改按钮
         Button submitButton = new Button("确认修改");
@@ -196,8 +206,8 @@ public class personalinfo extends Application {
             Client.signature = signatureField.getText();
             Client.sex = genderComboBox.getValue();
             Client.birthday = birthdayField.getText();
-            Client.country = countryComboBox.getValue();
-            Client.province = provinceComboBox.getValue();
+            //Client.country = countryComboBox.getValue();
+            //Client.province = provinceComboBox.getValue();
 
 
             // 关闭修改窗口
@@ -205,7 +215,7 @@ public class personalinfo extends Application {
         });
 
         // 将所有元素添加到布局中
-        root.getChildren().addAll(avatarBox, usernameBox, signatureBox, genderBox, birthdayBox, countryBox, provinceBox);
+        root.getChildren().addAll(avatarBox, usernameBox, signatureBox, genderBox, birthdayBox, controlTimeBox, goodRatingPercentageBox);
 
         // 添加确认按钮，并将其设置为底部居中
         VBox.setMargin(submitButton, new Insets(20, 0, 0, 0));

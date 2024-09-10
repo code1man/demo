@@ -13,7 +13,20 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.example.demo.Client;
 import org.example.demo.utils.VideoUtil;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundSize;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundRepeat;
+import org.example.demo.Client;
+import org.example.demo.utils.TCPReceiveUtil;
+import org.example.demo.utils.TCPSendUtil;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -97,25 +110,53 @@ public class yuanchengkongzhi01 extends Application {
 
         // 创建评分的 RadioButton
         ToggleGroup ratingGroup = new ToggleGroup();
-        RadioButton score1 = new RadioButton("1 分");
-        RadioButton score2 = new RadioButton("2 分");
-        RadioButton score3 = new RadioButton("3 分");
-        RadioButton score4 = new RadioButton("4 分");
-        RadioButton score5 = new RadioButton("5 分");
+        RadioButton score1 = new RadioButton("赞");
+        RadioButton score2 = new RadioButton("踩");
+//        RadioButton score3 = new RadioButton("3 分");
+//        RadioButton score4 = new RadioButton("4 分");
+//        RadioButton score5 = new RadioButton("5 分");
 
         score1.setToggleGroup(ratingGroup);
         score2.setToggleGroup(ratingGroup);
-        score3.setToggleGroup(ratingGroup);
-        score4.setToggleGroup(ratingGroup);
-        score5.setToggleGroup(ratingGroup);
+//        score3.setToggleGroup(ratingGroup);
+//        score4.setToggleGroup(ratingGroup);
+//        score5.setToggleGroup(ratingGroup);
 
         // 确认按钮
         Button submitBtn = new Button("提交评分");
         submitBtn.setOnAction(e -> {
             RadioButton selected = (RadioButton) ratingGroup.getSelectedToggle();
             if (selected != null) {
-                System.out.println("用户评分: " + selected.getText());
+                System.out.println("用户评价: " + selected.getText());
                 ratingStage.close(); // 关闭评分窗口
+
+                System.out.println("1");
+
+                //先连接-------------------------------------------------------------
+
+                TCPSendUtil sendUtil = new TCPSendUtil(Client.secondClient);
+                TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.secondClient) ;
+                //---------------------------------------------------------------
+
+                System.out.println("2");
+                //先获取控制者的id/名字
+                //假设这里是名字
+
+               new Thread(()->{
+                   String controller = "马化腾";//要改
+
+                   String request = "FEEDBACK "+controller+" "+selected.getText();
+                   sendUtil.sendUTF(request);
+
+                   String[]  result = receiveUtil.receiveUTF().split(" ");
+                   Client.controlTimes = Integer.parseInt(result[0]);
+                   Client.goodRatingPercentage =Integer.parseInt(result[1])/(double)Client.controlTimes ;
+                   //connect reset
+                   System.out.println("好评率和操作次数");
+
+               }).start();
+
+
             } else {
                 System.out.println("请先选择评分！");
             }
@@ -124,7 +165,7 @@ public class yuanchengkongzhi01 extends Application {
         // 布局
         VBox ratingBox = new VBox(10);
         ratingBox.setPadding(new Insets(20));
-        ratingBox.getChildren().addAll(score1, score2, score3, score4, score5, submitBtn);
+        ratingBox.getChildren().addAll(score1, score2, submitBtn);
 
         Scene ratingScene = new Scene(ratingBox, 200, 200);
         ratingStage.setScene(ratingScene);

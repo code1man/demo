@@ -25,6 +25,8 @@ import org.example.demo.utils.TCPSendUtil;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import javax.swing.text.Utilities;
+import java.io.*;
 import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -41,6 +43,7 @@ public class chat extends Application {
     private Button videoCall;
     private TextField messageInput;
     private Sender sender;
+    private CameraUtil cameraUtil;
     private VBox chatBox;
     private VBox nameBox;
     private Sender sender_call;
@@ -57,40 +60,19 @@ public class chat extends Application {
 
     public void initialize() {
         try {
-            sender_call = new Sender("localhost", 9999);
+            int id = DbUtil.getID(username);
+
+            sender_call = new Sender("localhost", 9999,id, friendName);
             // 初始化客户端并连接到服务器
-            sender = new Sender("localhost", 10086); // 替换为服务器的IP和端口
+            sender = new Sender("localhost", 10086,id, friendName); // 替换为服务器的IP和端口
             startListening();
+            startListening_call();
             System.out.println("success initialize");
         } catch (IOException e) {System.out.println("fail initialize");
 
-            chatArea.appendText("Failed to connect to server: " + e.getMessage() + "\n");
+            //chatArea.appendText("Failed to connect to server: " + e.getMessage() + "\n");
             e.printStackTrace();
         }
-    }
-
-    private HBox createBubble(String message, boolean isSent) {
-        Label messageLabel = new Label(message);
-        messageLabel.setStyle("-fx-background-color: lightblue; -fx-background-radius: 15; -fx-padding: 10; -fx-text-fill: black;");
-
-        // 创建气泡背景
-        HBox bubbleBox = new HBox();
-        bubbleBox.setPadding(new Insets(5));
-        bubbleBox.setAlignment(isSent ? Pos.CENTER_LEFT : Pos.CENTER_RIGHT);
-        bubbleBox.setMinWidth(100);
-        bubbleBox.setMaxWidth(300);
-
-        if (isSent) {
-            // 发送消息的气泡
-            bubbleBox.getChildren().add(messageLabel);
-            bubbleBox.setAlignment(Pos.CENTER_LEFT);
-        } else {
-            // 接收消息的气泡
-            bubbleBox.setAlignment(Pos. CENTER_RIGHT);
-            bubbleBox.getChildren().add(messageLabel);
-        }
-
-        return bubbleBox;
     }
 
     @FXML
@@ -98,13 +80,25 @@ public class chat extends Application {
         String message = messageInput.getText();
         if (!message.trim().isEmpty()) {
             // 创建气泡背景
-            HBox bubbleBox = createBubble(message, true);
-            bubbleBox.getChildren().add(nameBox);// 传入 true 表示发送消息
-            chatBox.getChildren().add(bubbleBox);
+            // 格式化消息：用户名、消息内容、时间戳
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            String formattedMessage = Client.name + "   " + message + "    " + timestamp + "    ";
 
-            // 滚动到最新消息
-            ScrollPane scrollPane = (ScrollPane) chatBox.getParent().getParent();
-            scrollPane.setVvalue(1.0);
+            String request = "SENDMESSAGE "+Client.uid+" "+ friendName+" "+message  ;
+
+            TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+            sendUtil.sendUTF(request);
+
+            sender.sendMessage(formattedMessage);
+
+            // 将格式化消息发送到服务器
+            sender.sendMessage(formattedMessage);
+
+            // 显示发送的消息到聊天区域
+            chatArea.appendText(formattedMessage + "\n");
+
+            // 保存消息到本地txt文件
+            chat.saveMessageToFile(friendName, formattedMessage);
 
             // 清空输入框
             messageInput.clear();
@@ -119,7 +113,11 @@ public class chat extends Application {
                 String message;
                 while ((message = sender.receiveMessage()) != null) {
                     String finalMessage = message;
-                    chatArea.appendText(finalMessage + "\n"); // 显示收到的消息
+                    System.out.println(message);
+                    //chatArea.appendText(finalMessage + "\n"); // 显示收到的消息
+                     Platform.runLater(()->{
+                         chatArea.appendText(finalMessage + "\n");
+                    });
                 }
             } catch (IOException e) {
                 chatArea.appendText("Connection lost.\n");
@@ -173,39 +171,7 @@ public class chat extends Application {
         newWindow.show();
     }
 
-    public void startListening_call() {
-
-        Thread thread = new Thread(() -> {
-            try {
-                String message;
-                while ((message = sender_call.receiveMessage()) != null) {
-                    System.out.println(message);
-                    String finalMessage = message;
-                    if(finalMessage.equals("1"))         //有语音通话的请求的信息
-                    {
-                        if (!VoiceCallClient.isCalling) {
-                            System.out.println("准备加载确认界面");
-                            Platform.runLater(this::showVoiceCallWindow);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                chatArea.appendText("无法语音通话");
-            }
-        });
-        thread.setDaemon(true);
-        thread.start();
-    }
-
     public void call(ActionEvent actionEvent) {
-        //实际上要用这个 VoiceCallClient.socket
-        //先连接
-        //------------------------------------------------------------
-        try {
-            Client.client = new Socket("127.0.0.1",7777);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
 
         TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
@@ -222,15 +188,12 @@ public class chat extends Application {
 
             sendUtil.sendUTF(request);
 
-            sessionID =  Integer.parseInt(receiveUtil.receiveUTF()) ;
-
             voiceCall.setText("挂断通话");
         } else {
             terminateVoiceCall();
 
             String request = "FinishVoiceChat";
             sendUtil.sendUTF(request);
-            System.out.println(receiveUtil.receiveUTF());
 
             voiceCall.setText("发起语音通话");
         }
@@ -275,7 +238,7 @@ public class chat extends Application {
         try {
             new Thread(() -> {
                 try {
-                    VoiceCallClient.main(null); // 启动音频捕获和接收线程
+                    VoiceCallClient.main(new String[]{Client.uid, friendName}); // 启动音频捕获和接收线程
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -319,6 +282,36 @@ public class chat extends Application {
         }
     }
 
+    public void startListening_call() {
+
+        Thread thread = new Thread(() -> {
+            try {
+                String message;
+                //System.out.println("接收到的信息为："+sender_call.receiveMessage());
+                while ((message = sender_call.receiveMessage()) != null) {
+                    System.out.println(message);
+                    String finalMessage = message;
+                    System.out.println("准备接收语音通话");
+                    if(finalMessage.equals("2"))         //有语音通话的请求的信息
+                    {
+                        System.out.println("接收到语音通话请求");
+                        if (!VoiceCallClient.isCalling) {
+                            System.out.println("准备加载确认界面");
+                            Platform.runLater(this::showVoiceCallWindow);
+                        }
+                        else{
+                            System.out.println("接听失败");
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                chatArea.appendText("无法语音通话");
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+    }
+
     @Override
     public void start(Stage primaryStage) {
         initialize();
@@ -329,24 +322,24 @@ public class chat extends Application {
         Pane root = new Pane();
         root.setStyle("-fx-background-image: url('/back01.png'); -fx-background-size: cover;");
 
-//        // 对话框部分 (白色背景)
-//        chatArea = new TextArea();
-//        chatArea.setEditable(false); // 只允许查看信息，不可编辑
-//        chatArea.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
-//
-//        chatArea.setPrefHeight(400); // 设置高度
+        // 对话框部分 (白色背景)
+        chatArea = new TextArea();
+        chatArea.setEditable(false); // 只允许查看信息，不可编辑
+        chatArea.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
 
-        chatBox = new VBox(10);
-        chatBox.setPadding(new Insets(10));
-        chatBox.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
-        Label label=new Label(username);
-        nameBox.getChildren().add(label);
-        nameBox.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
-        ScrollPane chatScrollPane = new ScrollPane();
-        chatScrollPane.setContent(chatBox);
-        chatScrollPane.setFitToWidth(true);
-        chatScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        chatScrollPane.setPrefHeight(400);
+        chatArea.setPrefHeight(400); // 设置高度
+
+//        chatBox = new VBox(10);
+//        chatBox.setPadding(new Insets(10));
+//        chatBox.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
+//        Label label=new Label(username);
+//        nameBox.getChildren().add(label);
+//        nameBox.setStyle("-fx-background-color: white; -fx-border-radius: 5; -fx-border-color: black;");
+//        ScrollPane chatScrollPane = new ScrollPane();
+//        chatScrollPane.setContent(chatBox);
+//        chatScrollPane.setFitToWidth(true);
+//        chatScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+//        chatScrollPane.setPrefHeight(400);
         // 工具栏，包含视频通话和语音通话
         HBox toolbar = new HBox(10); // 10 为按钮之间的间距
         videoCall = new Button("视频通话");
@@ -369,57 +362,12 @@ public class chat extends Application {
         // 消息发送事件，点击发送后将信息显示在对话框中
         sendButton.setOnAction(e -> {
             sendMessage();
-            String message = messageInput.getText();
-            if (!message.isEmpty()) {
-                //存入数据库和txt文件中
-                try {
-                    String sender = Client.uid;
-                    //转成id
-                    String sql =  "SELECT userid FROM t_users WHERE username = ?";
-                    ArrayList<Object> arrayList = new ArrayList<>();
-                    arrayList.add(primaryStage.getTitle());
-
-                    ResultSet resultSet = DbUtil.executeQuery(sql,arrayList);
-                    String request = "";
-
-                    if(resultSet.next()) {
-                        String receiver = resultSet.getString("userid");
-                        //还没弄入文件
-                        String messageText = message;
-                        request = "INFORMATION"+" "+sender+" "+receiver+" "+messageText;
-                    }
-
-                    try {
-                        Client.client = new Socket("127.0.0.1",7777);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-
-                    TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-                    TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
-                    sendUtil.sendUTF(request);
-
-                    // 获取当前时间戳
-                    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-                    // 追加信息到 txt 文件
-                    String chatLine = Client.name + "   " + message + "    " + timestamp + "    ";
-                    saveMessageToFile(primaryStage.getTitle(), chatLine);
-
-
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
-
-                chatArea.appendText(Client.name+"   "+message + "   "+Timestamp.valueOf(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))) + "\n");
-                messageInput.clear(); // 清空输入框
-
-            }
+            messageInput.clear(); // 清空输入框
         });
 
         voiceCall.setOnAction(
                 actionEvent -> {
-                    sender_call.sendMessage("1");       //传递一串特殊字符用于表示点击事件
+                    sender_call.sendMessage("2");       //传递一串特殊字符用于表示点击事件
                     call(actionEvent);
                 }
         );
@@ -436,7 +384,7 @@ public class chat extends Application {
 
         // 总体布局，将所有组件按顺序放入
         VBox layout = new VBox(10); // 10 为组件之间的间距
-        layout.getChildren().addAll(nameBox,chatScrollPane, toolbar, messageBox);
+        layout.getChildren().addAll(chatArea, toolbar, messageBox);
         layout.setPadding(new Insets(20)); // 设置内边距
         layout.setAlignment(Pos.BOTTOM_CENTER); // 设置总体布局居中
 
@@ -445,23 +393,75 @@ public class chat extends Application {
 
         // 场景设置，调整页面大小
         Scene scene = new Scene(root, 600, 550); // 调整页面大小为 800x600
-        primaryStage.setTitle("聊天窗口");
+        primaryStage.setTitle(friendName);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
 
     //写进txt
-    public void saveMessageToFile(String friendname, String message) {
+    public static void saveMessageToFile(String friendname, String message,String timestamp) {
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(  DbUtil.getID(friendname) + "_chat.txt", true))) {
-            writer.write(message);
-            writer.newLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+        //---------------------------------------------------------------------
+
+        String request = "GETID "+friendname;
+        sendUtil.sendUTF(request);
+        new Thread(()->{{
+            int id  = Integer.parseInt(receiveUtil.receiveUTF());
+
+            // 读取最后一条消息的时间戳
+            File chatFile = new File(id + "_chat.txt");
+            String lastTimestamp = "";
+            if (chatFile.exists()) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(chatFile))) {
+                    String lastLine = "";
+                    while ((lastLine = reader.readLine()) != null) {
+                        String[] result = lastLine.split(" ");
+                        System.out.println(lastLine);
+                        // 找到最后一行，假设最后一行记录了时间戳
+                        lastTimestamp = result[0]+" "+result[1];  // 假设时间戳在第一位
+                        System.out.println(lastTimestamp);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // 检查当前消息时间戳是否晚于最后一条消息的时间戳
+            if (timestamp.compareTo(lastTimestamp)>0) {
+                System.out.println("该离线消息已进入txt");
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(id + "_chat.txt", true))) {
+                    writer.write(message);
+                    writer.newLine();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }}).start();
+
     }
 
+    public static void saveMessageToFile(String friendname, String message) {
+
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+        //---------------------------------------------------------------------
+
+        new Thread(()->{
+            String request = "GETID "+friendname;
+            sendUtil.sendUTF(request);
+            int id  = Integer.parseInt(receiveUtil.receiveUTF());
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(  id+ "_chat.txt", true))) {
+                writer.write(message);
+                writer.newLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
 
     public static void main(String[] args) {

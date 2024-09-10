@@ -27,7 +27,7 @@ public class Sender {
 
     public void sendMessage(String message) {
         System.out.println(message);
-        out.println(friendId + ":" + message);
+        out.println(friendId + "#" + message);
     }
 
     public String receiveMessage() throws IOException {

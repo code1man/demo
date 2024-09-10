@@ -67,7 +67,7 @@ public class Receiver {
 
         private void broadcastMessage(String message) {
             synchronized (clientWriters) {
-                String[] info = message.split(":");
+                String[] info = message.split("#");
                 System.out.println(info[0]);
                 for (ClientHandler c: clientWriters) {
                     if (c.uid == Integer.parseInt(info[0])) {

@@ -1,6 +1,7 @@
 package org.example.demo;
 
 
+import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
@@ -25,12 +26,12 @@ public class Client {
     public static String name = null;
     public static String uid = null;
 
-    public static  String  avatarUrl="/touxiang.png";  //头像路径
-    public static  int controlTimes = 0 ;  //操控/touxiang.png次数
+    public static String avatarUrl = "/touxiang.png";  //头像路径
+    public static int controlTimes = 0;  //操控/touxiang.png次数
     public static double goodRatingPercentage = 0.0;//好评率
 
     public static int friendNumb = 0;
-    public static ArrayList<String>friendNames = new ArrayList<>();
+    public static ArrayList<String> friendNames = new ArrayList<>();
 
     public static ArrayList<String> selectFriendName = new ArrayList<>();
     public static String sex = "无";
@@ -84,8 +85,8 @@ public class Client {
             }
         });
 
-         recieveImgThread = new Thread(()->{
-            TCPReceiveUtil receive = new TCPReceiveUtil(Client.RemoteCastClient);
+        recieveImgThread = new Thread(() -> {
+            TCPReceiveUtil receive = new TCPReceiveUtil(Client.client);
             while (true) {
                 byte[] imageData = receive.receiveImg();
                 ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
@@ -98,7 +99,7 @@ public class Client {
             }
         });
 
-        robotThread = new Thread(()->{
+        robotThread = new Thread(() -> {
             TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.RemoteControlClient);
             try {
                 Robot robot = new Robot();
@@ -175,17 +176,17 @@ public class Client {
         recieveImgThread.start();
     }
 
-    public static void startRemoteControl(){
+    public static void startRemoteControl() {
         sendImgThread.start();
         robotThread.start();
     }
 
-    public static void stopRemoteControl(){
+    public static void stopRemoteControl() {
         sendImgThread.interrupt();
         robotThread.interrupt();
     }
 
-    public static void stopRemoteHash(){
+    public static void stopRemoteHash() {
         sendImgThread.interrupt();
         recieveImgThread.interrupt();
     }
@@ -201,6 +202,15 @@ public class Client {
                 System.out.println("头像文件不存在: " + Client.avatarUrl);
             }
         }
+    }
+
+    // 显示信息框的方法
+    public static void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
 
