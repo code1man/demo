@@ -411,6 +411,12 @@ public class Server {
                 System.out.println(arrayList2.toString());
                 System.out.println(count+"条记录   " + "同意了好友申请");
                 selectClient(DbUtil.getID(friendName)).send2.sendUTF("ACCEPT#" + DbUtil.getUserName(userid));
+
+                //我们还要再插入一条
+                String sql = "INSERT INTO t_friends  (userid,friendid,status) VALUES (?,?,?)";
+                int count1 = DbUtil.executeUpdate(sql, arrayList1);
+                System.out.println(count + "条记录   " + DbUtil.getID(friendName) + "  和 " + userid + "相互成为了好友");
+                sendUtil.sendUTF(friendName);
             }
             //拒绝
             else
