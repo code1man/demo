@@ -8,7 +8,7 @@ import java.util.concurrent.Executors;
 public class ServerStart {
     public static void main(String[] args) throws IOException {
         // 使用线程池来并行启动各个服务器
-        ExecutorService executorService = Executors.newFixedThreadPool(4); // 创建固定大小为4的线程池
+        ExecutorService executorService = Executors.newFixedThreadPool(7); // 创建固定大小为7的线程池
 
         // 启动 Receiver 服务器
         executorService.submit(() -> {
@@ -33,6 +33,29 @@ public class ServerStart {
         executorService.submit(() -> {
             try {
                 Server.main(args);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        //接受远程操控的请求
+        executorService.submit(() -> {
+            confirmRemoteControlServer.main(args);
+        });
+
+        //摄像机功能
+        executorService.submit(() -> {
+            try {
+                CameraServer.main(args);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        //远程操控
+        executorService.submit(() -> {
+            try {
+                RemoteControlServer.main(args);
             } catch (IOException e) {
                 e.printStackTrace();
             }

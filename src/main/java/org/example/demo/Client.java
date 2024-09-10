@@ -92,6 +92,7 @@ public class Client {
                 ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
                 try {
                     BufferedImage image = ImageIO.read(bais);
+                    System.out.println("投屏：" + image);
                     controlWindow.updateImage(image);
                 } catch (IOException e) {
                     throw new RuntimeException(e);

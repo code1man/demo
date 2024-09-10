@@ -12,21 +12,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.example.demo.Client;
-import org.example.demo.utils.VideoUtil;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.BackgroundPosition;
-import javafx.scene.layout.BackgroundSize;
-import javafx.scene.layout.BackgroundImage;
-import javafx.scene.layout.BackgroundRepeat;
-import org.example.demo.Client;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
+import org.example.demo.utils.VideoUtil;
 
-import java.io.IOException;
-import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -39,7 +28,7 @@ public class yuanchengkongzhi01 extends Application {
     @Override
     public void start(Stage primaryStage) {
 
-        primaryStage.getIcons().add(new Image("logo.jpg"));
+        primaryStage.getIcons().add(new Image("/logo.jpg"));
 
         // 计时器
         Timer timer = new Timer();
@@ -112,15 +101,9 @@ public class yuanchengkongzhi01 extends Application {
         ToggleGroup ratingGroup = new ToggleGroup();
         RadioButton score1 = new RadioButton("赞");
         RadioButton score2 = new RadioButton("踩");
-//        RadioButton score3 = new RadioButton("3 分");
-//        RadioButton score4 = new RadioButton("4 分");
-//        RadioButton score5 = new RadioButton("5 分");
 
         score1.setToggleGroup(ratingGroup);
         score2.setToggleGroup(ratingGroup);
-//        score3.setToggleGroup(ratingGroup);
-//        score4.setToggleGroup(ratingGroup);
-//        score5.setToggleGroup(ratingGroup);
 
         // 确认按钮
         Button submitBtn = new Button("提交评分");
@@ -132,15 +115,10 @@ public class yuanchengkongzhi01 extends Application {
 
                 System.out.println("1");
 
-                //先连接-------------------------------------------------------------
-
-                TCPSendUtil sendUtil = new TCPSendUtil(Client.secondClient);
-                TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.secondClient) ;
-                //---------------------------------------------------------------
+                TCPSendUtil sendUtil = new TCPSendUtil(Client.client);
+                TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
                 System.out.println("2");
-                //先获取控制者的id/名字
-                //假设这里是名字
 
                new Thread(()->{
                    String controller = "马化腾";//要改
@@ -153,10 +131,7 @@ public class yuanchengkongzhi01 extends Application {
                    Client.goodRatingPercentage =Integer.parseInt(result[1])/(double)Client.controlTimes ;
                    //connect reset
                    System.out.println("好评率和操作次数");
-
                }).start();
-
-
             } else {
                 System.out.println("请先选择评分！");
             }
