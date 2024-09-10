@@ -33,6 +33,7 @@ public class Receiver {
         public ClientHandler(Socket socket) throws IOException {
             this.clientSocket = socket;
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            System.out.println("一个用户连接");
         }
 
         @Override
@@ -40,6 +41,7 @@ public class Receiver {
             try {
                 String message;
                 while ((message = in.readLine()) != null) {
+                    System.out.println(message);
                     broadcastMessage(message); // Broadcast message to all clients
                 }
             }

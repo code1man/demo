@@ -63,14 +63,15 @@ public class chat extends Application {
             // 初始化客户端并连接到服务器
             sender = new Sender("localhost", 10086); // 替换为服务器的IP和端口
             startListening();
+            startListening_call();
             System.out.println("success initialize");
         } catch (IOException e) {System.out.println("fail initialize");
 
-            chatArea.appendText("Failed to connect to server: " + e.getMessage() + "\n");
+            //chatArea.appendText("Failed to connect to server: " + e.getMessage() + "\n");
             e.printStackTrace();
         }
     }
-    private HBox createBubble(String message, boolean isSent) {
+    public HBox createBubble(String message, boolean isSent) {
         Label messageLabel = new Label(message);
         messageLabel.setStyle("-fx-background-color: lightblue; -fx-background-radius: 15; -fx-padding: 10; -fx-text-fill: black;");
 
@@ -99,17 +100,16 @@ public class chat extends Application {
         String message = messageInput.getText();
         if (!message.trim().isEmpty()) {
             // 创建气泡背景
-            HBox bubbleBox = createBubble(message, true);
-            bubbleBox.getChildren().add(nameBox);// 传入 true 表示发送消息
-            chatBox.getChildren().add(bubbleBox);
+            sender.sendMessage(message.trim());
+//            HBox bubbleBox = createBubble(message, true);
+//            bubbleBox.getChildren().add(nameBox);// 传入 true 表示发送消息
+//            chatBox.getChildren().add(bubbleBox);
 
             // 滚动到最新消息
-            ScrollPane scrollPane = (ScrollPane) chatBox.getParent().getParent();
-            scrollPane.setVvalue(1.0);
-
-            // 清空输入框
+//            ScrollPane scrollPane = (ScrollPane) chatBox.getParent().getParent();
+//            scrollPane.setVvalue(1.0);
             messageInput.clear();
-        }
+          }
         }
 
 
@@ -119,11 +119,16 @@ public class chat extends Application {
             try {
                 String message;
                 while ((message = sender.receiveMessage()) != null) {
-                    String finalMessage = message;
-                    chatArea.appendText(finalMessage + "\n"); // 显示收到的消息
+                    String finalMessage = username+":"+message;
+                    //chatArea.appendText(finalMessage + "\n"); // 显示收到的消息
+                     Platform.runLater(()->{
+                        HBox bubbleBox = createBubble(finalMessage, true);
+                        bubbleBox.getChildren().add(nameBox);// 传入 true 表示发送消息
+                        chatBox.getChildren().add(bubbleBox);
+                    });
                 }
             } catch (IOException e) {
-                chatArea.appendText("Connection lost.\n");
+               // chatArea.appendText("Connection lost.\n");
             }
         });
         thread.setDaemon(true);
@@ -171,29 +176,6 @@ public class chat extends Application {
 
         // 显示新窗口
         newWindow.show();
-    }
-    public void startListening_call() {
-
-        Thread thread = new Thread(() -> {
-            try {
-                String message;
-                while ((message = sender_call.receiveMessage()) != null) {
-                    System.out.println(message);
-                    String finalMessage = message;
-                    if(finalMessage.equals("1"))         //有语音通话的请求的信息
-                    {
-                        if (!VoiceCallClient.isCalling) {
-                            System.out.println("准备加载确认界面");
-                            Platform.runLater(this::showVoiceCallWindow);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                chatArea.appendText("无法语音通话");
-            }
-        });
-        thread.setDaemon(true);
-        thread.start();
     }
     public void call(ActionEvent actionEvent) {
         //实际上要用这个 VoiceCallClient.socket
@@ -265,6 +247,22 @@ public class chat extends Application {
             e.printStackTrace();
         }
     }
+    private void terminateVideoCall() {
+        System.out.println("结束视频通话...");
+
+        VoiceCallClient.isCalling = false;
+        CameraUtil.isCalling = false;
+
+        try {
+            if (VoiceCallClient.socket != null && !VoiceCallClient.socket.isClosed()) {
+                VoiceCallClient.socket.close();
+                cameraUtil.closeVideoModule();
+                System.out.println("Socket连接已关闭");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void initiateVoiceCall() {
         System.out.println("发起语音通话...");
@@ -301,23 +299,36 @@ public class chat extends Application {
             e.printStackTrace();
         }
     }
+    public void startListening_call() {
 
-    private void terminateVideoCall() {
-        System.out.println("结束视频通话...");
-
-        VoiceCallClient.isCalling = false;
-        CameraUtil.isCalling = false;
-
-        try {
-            if (VoiceCallClient.socket != null && !VoiceCallClient.socket.isClosed()) {
-                VoiceCallClient.socket.close();
-                cameraUtil.closeVideoModule();
-                System.out.println("Socket连接已关闭");
+        Thread thread = new Thread(() -> {
+            try {
+                String message;
+                //System.out.println("接收到的信息为："+sender_call.receiveMessage());
+                while ((message = sender_call.receiveMessage()) != null) {
+                    System.out.println(message);
+                    String finalMessage = message;
+                    System.out.println("准备接收语音通话");
+                    if(finalMessage.equals("1"))         //有语音通话的请求的信息
+                    {
+                        System.out.println("接收到语音通话请求");
+                        if (!VoiceCallClient.isCalling) {
+                            System.out.println("准备加载确认界面");
+                            Platform.runLater(this::showVoiceCallWindow);
+                        }
+                        else{
+                            System.out.println("接听失败");
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                chatArea.appendText("无法语音通话");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -368,9 +379,14 @@ public class chat extends Application {
 
         // 消息发送事件，点击发送后将信息显示在对话框中
         sendButton.setOnAction(e -> {
+            //System.out.println("dsaf");
             sendMessage();
-            String message = messageInput.getText();
+            //System.out.println("dsaf");
+            String message = messageInput.getText();            //?此处信息已被clear
+            //System.out.println("1");
+
             if (!message.isEmpty()) {
+                //System.out.println("猪");
                 //存入数据库和txt文件中
 
                 try {
@@ -425,7 +441,6 @@ public class chat extends Application {
                 }
         );
 
-        voiceCall.setOnAction(this::call);
         videoCall.setOnAction(this::call);
 
         // 底部的消息输入和发送按钮布局

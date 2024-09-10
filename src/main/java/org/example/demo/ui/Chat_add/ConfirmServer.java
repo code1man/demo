@@ -50,7 +50,7 @@ public class ConfirmServer {
                     broadcastMessage(message, out); // Broadcast message to all clients
                 }
 
-                System.out.println("广播成功");
+                //System.out.println("广播成功");
             } catch (SocketException e) {
                 System.out.println("广播不成功");
                 System.out.println("连接被重置: " + e.getMessage());
@@ -73,9 +73,12 @@ public class ConfirmServer {
         private void broadcastMessage(String message, PrintWriter sender) {
             synchronized (clientWriters) {
                 for (PrintWriter writer : clientWriters) {
-                    if (writer != sender) {  // 排除发送者，不给自己广播
-
+                    if (writer != sender) {  // 排除发送者，不给自己广
                         writer.println(message);  // 向其他客户端发送消息
+                        System.out.println("dasfa");
+                    }
+                    else{
+                        System.out.println("aaaaaa");
                     }
                 }
             }

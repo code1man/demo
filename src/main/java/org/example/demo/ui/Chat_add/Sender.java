@@ -18,11 +18,14 @@ public class Sender {
     }
 
     public void sendMessage(String message) {
+        System.out.println(message);
         out.println(message);
     }
 
     public String receiveMessage() throws IOException {
-        return in.readLine();
+        String message = in.readLine();
+        System.out.println(message);
+        return message;
     }
 
     public void close() throws IOException {
