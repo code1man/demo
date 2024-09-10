@@ -30,14 +30,15 @@ public class yuanchengkongzhi extends Application {
     private int seconds = 0; // 计时器的秒数
     private Label timerLabel = new Label("远程控制时间: 0 秒");
     private boolean isIcon1 = true; // 用于图标切换的标志位
-    private ImageView imageView;
+    private static ImageView imageView;
     private RemoteControlUtil remoteControlUtil;
     private TCPSendUtil tcpSendUtil;
 
     //private RemoteControlUtil remoteControlUtil = new RemoteControlUtil();
-    public yuanchengkongzhi() {
+    public yuanchengkongzhi(String fname) {
         remoteControlUtil = new RemoteControlUtil();
         tcpSendUtil = new TCPSendUtil(Client.RemoteControlClient);
+        tcpSendUtil.sendUTF(Client.uid + "#" + fname);
     }
 
     @Override
@@ -196,7 +197,7 @@ public class yuanchengkongzhi extends Application {
         ratingStage.show();
     }
 
-    public void updateImage(BufferedImage bufferedImage) {
+    public static void updateImage(BufferedImage bufferedImage) {
         if (bufferedImage != null)
         {
             Image javafxImage = SwingFXUtils.toFXImage(bufferedImage, null);

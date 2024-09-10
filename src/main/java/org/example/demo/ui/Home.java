@@ -20,9 +20,7 @@ import javafx.stage.Window;
 import org.example.demo.Client;
 import org.example.demo.Main;
 import org.example.demo.controller.shenqingController;
-import org.example.demo.utils.DbUtil;
-import org.example.demo.utils.TCPReceiveUtil;
-import org.example.demo.utils.TCPSendUtil;
+import org.example.demo.utils.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -431,15 +429,17 @@ public class Home extends Application {
                         btnAccept.setOnAction(event -> {
                             System.out.println("Accepted");
                             dialog.close(); // Close the dialog when accepted
+                            RemoteControlUtil remoteControlUtil = new RemoteControlUtil();
+                            new TCPSendUtil(Client.RemoteControlClient).sendUTF(Client.uid + "#" + info[1]);
                             new yuanchengkongzhi01().start(Main.stage);
-                            sendUtil.sendUTF("ACCEPTREMOTECONTROL" + info[1]);
+                            new TCPSendUtil(Client.confirmRemoteControlClient).sendUTF("ACCEPTREMOTECONTROL " + info[1]);
                         });
 
                         Button btnReject = new Button("拒绝");
                         btnReject.setOnAction(event -> {
                             System.out.println("Rejected");
                             dialog.close(); // Close the dialog when rejected
-                            sendUtil.sendUTF("REJECTREMOTECONTROL " + info[1]);
+                            new TCPSendUtil(Client.confirmRemoteControlClient).sendUTF("REJECTREMOTECONTROL " + info[1]);
                         });
 
                         VBox content = new VBox(10, messageLabel, btnAccept, btnReject);
@@ -454,6 +454,8 @@ public class Home extends Application {
                         dialog.showAndWait();
                     } else if (info[0].equals("REMOTECONTROLEND")) {
 
+                    } else if (info[0].equals("INVITEVIDEOCALL")) {
+                        new shiping(info[1], false).start(new Stage());
                     }
                 }
             } catch (Exception e) {
@@ -627,7 +629,6 @@ public class Home extends Application {
                 // 创建一个 VBox 用于包含所有好友条块
                 VBox friendsListBox = new VBox(10); // 设置条块之间的间距
                 searchBox.getChildren().add(friendsListBox); // 将好友列表添加到searchBox中
-
 
                 // 查询并刷新好友列表的方法
                 Runnable refreshFriendsList = () -> {
@@ -992,8 +993,6 @@ public class Home extends Application {
                     TextArea chatArea = chatWindow.getChatArea();
                     chatArea.appendText(loadChatHistory(DbUtil.getID(friendname))); // 加载历史记录
 
-
-
                     // 保存聊天窗口到缓存
                     Client.chatWindows.put(friendname, chatStage);
                 } catch (Exception ex) {
@@ -1031,16 +1030,22 @@ public class Home extends Application {
         if (selectedFriends.size() > 0) {
             Platform.runLater(() -> {
                 try {
+                    TCPSendUtil sendUtil1 = new TCPSendUtil(Client.confirmRemoteControlClient);
                     // 创建 yuanchengkongzhi 窗口的实例并启动
-                    controlWindow = new yuanchengkongzhi();
+                    controlWindow = new yuanchengkongzhi(selectedFriends.get(0));
                     Stage controlStage = new Stage();
                     sendUtil.sendUTF("REMOTECONTROLSTART " + selectedFriends.get(0));
 
                     new Thread(() -> {
-                        String recieve = new TCPReceiveUtil(Client.RemoteControlClient).receiveUTF();
+                        System.out.println("接受中...");
+                        String recieve = new TCPReceiveUtil(Client.confirmRemoteControlClient).receiveUTF();
+                        System.out.println(recieve);
                         String[] result = recieve.split("#");
-                        if (result[0].equals("ACCEPTREMOTECONTROL"))
-                            controlWindow.start(controlStage); // 启动 yuanchengkongzhi 窗口
+
+                        Platform.runLater(() -> {
+                            if (result[0].equals("ACCEPTREMOTECONTROL"))
+                                controlWindow.start(controlStage); // 启动 yuanchengkongzhi 窗口
+                        });
                     }).start();
                 } catch (Exception ex) {
                     ex.printStackTrace();

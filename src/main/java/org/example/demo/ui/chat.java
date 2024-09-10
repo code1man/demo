@@ -41,7 +41,6 @@ public class chat extends Application {
     private Button videoCall;
     private TextField messageInput;
     private Sender sender;
-    private CameraUtil cameraUtil;
     private VBox chatBox;
     private VBox nameBox;
     private Sender sender_call;
@@ -53,7 +52,9 @@ public class chat extends Application {
         this.friendName = friendName;
         //可能要改成数据库中记录的用户名
     }
+
     public chat(){}
+
     public void initialize() {
         try {
             sender_call = new Sender("localhost", 9999);
@@ -67,6 +68,7 @@ public class chat extends Application {
             e.printStackTrace();
         }
     }
+
     private HBox createBubble(String message, boolean isSent) {
         Label messageLabel = new Label(message);
         messageLabel.setStyle("-fx-background-color: lightblue; -fx-background-radius: 15; -fx-padding: 10; -fx-text-fill: black;");
@@ -107,7 +109,7 @@ public class chat extends Application {
             // 清空输入框
             messageInput.clear();
         }
-        }
+    }
 
 
     // 从服务器接收消息并显示在 chatArea 中
@@ -126,6 +128,7 @@ public class chat extends Application {
         thread.setDaemon(true);
         thread.start();
     }
+
     private void showVoiceCallWindow() {
         // 创建一个新的窗口
         Stage newWindow = new Stage();
@@ -169,6 +172,7 @@ public class chat extends Application {
         // 显示新窗口
         newWindow.show();
     }
+
     public void startListening_call() {
 
         Thread thread = new Thread(() -> {
@@ -192,6 +196,7 @@ public class chat extends Application {
         thread.setDaemon(true);
         thread.start();
     }
+
     public void call(ActionEvent actionEvent) {
         //实际上要用这个 VoiceCallClient.socket
         //先连接
@@ -247,13 +252,11 @@ public class chat extends Application {
         VoiceCallClient.isCalling = true;
         CameraUtil.isCalling = true;
 
-        cameraUtil = new CameraUtil();
         // 启动客户端的音频捕获和发送逻辑
         try {
             new Thread(() -> {
                 try {
                     VoiceCallClient.main(null); // 启动音频捕获和接收线程
-                    cameraUtil.openVideoModule();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -308,7 +311,7 @@ public class chat extends Application {
         try {
             if (VoiceCallClient.socket != null && !VoiceCallClient.socket.isClosed()) {
                 VoiceCallClient.socket.close();
-                cameraUtil.closeVideoModule();
+                //cameraUtil.closeVideoModule();
                 System.out.println("Socket连接已关闭");
             }
         } catch (IOException e) {
@@ -369,7 +372,6 @@ public class chat extends Application {
             String message = messageInput.getText();
             if (!message.isEmpty()) {
                 //存入数据库和txt文件中
-
                 try {
                     String sender = Client.uid;
                     //转成id
@@ -422,8 +424,10 @@ public class chat extends Application {
                 }
         );
 
-        videoCall.setOnAction(this::call);
-
+        videoCall.setOnAction(e->{
+            new TCPSendUtil(Client.client).sendUTF("INVITEVIDEOCALL " + friendName);
+            new shiping(friendName, true).start(new Stage());
+        });
 
         // 底部的消息输入和发送按钮布局
         HBox messageBox = new HBox(10); // 10 为输入框和按钮之间的间距

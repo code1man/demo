@@ -1,5 +1,6 @@
 package org.example.demo.ui;
 
+import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -15,10 +16,8 @@ import org.example.demo.Client;
 import org.example.demo.Main;
 import org.example.demo.utils.TCPSendUtil;
 
-import static javafx.application.Application.launch;
-
 //远程投屏
-public class info01 {
+public class info01 extends Application {
     public void start(Stage primaryStage) {
         primaryStage.getIcons().add(new Image("/logo.jpg"));
         // 设置申请远程控制的用户（可以从数据库中获取）
@@ -80,6 +79,6 @@ public class info01 {
     }
 
     public static void main(String[] args) {
-        launch(args);
+        launch();
     }
 }

@@ -95,6 +95,19 @@
             <classifier>windows-x86</classifier>
         </dependency>
 
+        <dependency>
+            <groupId>com.hp.hpl.jena</groupId>
+            <artifactId>json-jena</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.iflytek</groupId>
+            <artifactId>msc</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/Msc.jar</systemPath>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -138,6 +138,14 @@ public class Server {
                         {
                             showPendingFriends(Integer.parseInt(request[1]),send1);
                         }
+
+                        if (request[0].equals(("REMOTECONTROLSTART"))) {
+                            selectClient(DbUtil.getID(request[1])).send2.sendUTF("REMOTECONTROLSTART#" + DbUtil.getUserName(uip));
+                        }
+
+                        if (request[0].equals("INVITEVIDEOCALL")) {
+                            selectClient(DbUtil.getID(request[1])).send2.sendUTF("INVITEVIDEOCALL#" + DbUtil.getUserName(uip));
+                        }
                     }
 
                 }

@@ -1,6 +1,7 @@
 package org.example.demo;
 
 import org.example.demo.utils.CloseUtil;
+import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
@@ -33,6 +34,7 @@ public class CameraServer {
         private final Socket client;
 
         private int uid;
+        private int fuid;
         private boolean isRunning = false;
         private final TCPSendUtil send;
         private final TCPReceiveUtil receive;
@@ -43,6 +45,14 @@ public class CameraServer {
             this.send = new TCPSendUtil(client);
             this.receive = new TCPReceiveUtil(client);
 
+            String message = receive.receiveUTF();
+            String[] each = null;
+            if (message != null) {
+                each = message.split(" ");
+                uid = Integer.parseInt(each[0]);
+                fuid = DbUtil.getID(each[1]);
+            }
+
             System.out.println("一个客户建立了链接");
         }
 
@@ -50,18 +60,18 @@ public class CameraServer {
             new Thread(() -> {
                 while (isRunning) {
                     byte[] image = receive.receiveImg();
-                    if (image != null)
-                        send.sendImg(image);
+                    if (image != null && selectClient(fuid) != null)
+                        selectClient(fuid).send.sendImg(image);
                     // 这个根据自己写的部分按照需要写
                 }
             }).start();
         }
 
-        public void stop(){
+        public void stopCamera(){
             isRunning = false;
         }
 
-        public void restart(){
+        public void startCamera(){
             isRunning = true;
         }
 
@@ -75,6 +85,16 @@ public class CameraServer {
             for (Client c : all) {
                 if (c.uid == targetUid)
                     return c.client;
+            }
+            return null;
+        }
+
+        private Client selectClient(int userID) {
+            System.out.println(all);
+            for (Client c: all) {
+                if (userID == c.uid) {
+                    return c;
+                }
             }
             return null;
         }

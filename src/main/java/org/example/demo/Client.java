@@ -46,7 +46,7 @@ public class Client {
     public static Socket friendClient = null;
     public static Socket CameraClient = null;
     public static Socket RemoteCastClient = null;
-
+    public static Socket confirmRemoteControlClient = null;
 
     private static Thread recieveImgThread;
     private static Thread sendImgThread;
@@ -55,8 +55,15 @@ public class Client {
     public static Map<String, Stage> chatWindows = new HashMap<>();
 
     public void init() {
+        try {
+            confirmRemoteControlClient = new Socket("localhost", 5200);
+            new TCPSendUtil(confirmRemoteControlClient).sendInt(Integer.parseInt(uid));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         sendImgThread = new Thread(() -> {
-            TCPSendUtil sendUtil = new TCPSendUtil(Client.client);
+            TCPSendUtil sendUtil = new TCPSendUtil(Client.RemoteCastClient);
             while (true) {
                 Robot robot = null;
                 try {
@@ -78,7 +85,7 @@ public class Client {
         });
 
          recieveImgThread = new Thread(()->{
-            TCPReceiveUtil receive = new TCPReceiveUtil(Client.client);
+            TCPReceiveUtil receive = new TCPReceiveUtil(Client.RemoteCastClient);
             while (true) {
                 byte[] imageData = receive.receiveImg();
                 ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
