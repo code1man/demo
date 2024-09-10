@@ -34,7 +34,6 @@ public class yuanchengkongzhi extends Application {
     private RemoteControlUtil remoteControlUtil;
     private TCPSendUtil tcpSendUtil;
 
-    //private RemoteControlUtil remoteControlUtil = new RemoteControlUtil();
     public yuanchengkongzhi(String fname) {
         remoteControlUtil = new RemoteControlUtil();
         tcpSendUtil = new TCPSendUtil(Client.RemoteControlClient);

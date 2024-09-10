@@ -86,7 +86,7 @@ public class Client {
         });
 
         recieveImgThread = new Thread(() -> {
-            TCPReceiveUtil receive = new TCPReceiveUtil(Client.client);
+            TCPReceiveUtil receive = new TCPReceiveUtil(Client.RemoteCastClient);
             while (true) {
                 byte[] imageData = receive.receiveImg();
                 ByteArrayInputStream bais = new ByteArrayInputStream(imageData);

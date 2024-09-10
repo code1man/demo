@@ -23,7 +23,7 @@ public class RemoteControlServer {
     private static CopyOnWriteArrayList<Client> all = new CopyOnWriteArrayList<>();
 
     public static void main(String[] args) throws IOException {
-        System.out.println("-----Server-----");
+        System.out.println("-----RemoteControlServer-----");
 
         try (// 1、指定端口 使用SeverSocket创建服务器
              ServerSocket server = new ServerSocket(6666);
@@ -85,8 +85,11 @@ public class RemoteControlServer {
             new Thread(() -> {
                 while (isRunning) {
                     byte[] image = receive.receiveImg();
-                    if (image != null)
+                    System.out.println("服务器：" + image);
+                    if (image != null) {
+                        System.out.println(selectClient(fuid));
                         selectClient(fuid).send.sendImg(image);
+                    }
                     // 这个根据自己写的部分按照需要写
                 }
             }).start();
@@ -104,14 +107,6 @@ public class RemoteControlServer {
             isRunning = false;
             CloseUtil.close(client, send, receive, send2, receive2, secondClient);
             all.remove(this);
-        }
-
-        public Socket getTargetClient(int targetUid) {
-            for (Client c : all) {
-                if (c.uid == targetUid)
-                    return c.client;
-            }
-            return null;
         }
 
         private Client selectClient(int userID) {
