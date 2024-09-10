@@ -21,6 +21,11 @@
             <version>8.0.16</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv</artifactId>
+            <version>1.5.5</version> <!-- 使用适合你的版本 -->
+        </dependency>
 
         <dependency>
             <groupId>org.openjfx</groupId>

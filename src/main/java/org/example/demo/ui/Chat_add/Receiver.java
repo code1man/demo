@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Receiver {
     private ServerSocket serverSocket;
-    private List<PrintWriter> clientWriters;
+    private List<ClientHandler> clientWriters;
 
     public Receiver(int port) throws IOException {
         serverSocket = new ServerSocket(port);
@@ -18,10 +18,10 @@ public class Receiver {
         while (true) {
             Socket clientSocket = serverSocket.accept();
             synchronized (clientWriters) {
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                clientWriters.add(out);
+                ClientHandler c = new ClientHandler(clientSocket);
+                clientWriters.add(c);
+                c.start();
             }
-            new ClientHandler(clientSocket).start();
         }
     }
 
@@ -29,10 +29,15 @@ public class Receiver {
         private Socket clientSocket;
         private BufferedReader in;
         private PrintWriter out;
+        private int uid;
 
         public ClientHandler(Socket socket) throws IOException {
             this.clientSocket = socket;
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+            uid = Integer.parseInt(in.readLine());
+            System.out.println(uid);
+            System.out.println("一个用户连接");
         }
 
         @Override
@@ -40,6 +45,7 @@ public class Receiver {
             try {
                 String message;
                 while ((message = in.readLine()) != null) {
+                    System.out.println(message);
                     broadcastMessage(message); // Broadcast message to all clients
                 }
             }
@@ -49,7 +55,7 @@ public class Receiver {
                 e.printStackTrace();
             } finally {
                 synchronized (clientWriters) {
-                    clientWriters.remove(out);
+                    clientWriters.remove(clientSocket);
                 }
                 try {
                     clientSocket.close();
@@ -61,8 +67,12 @@ public class Receiver {
 
         private void broadcastMessage(String message) {
             synchronized (clientWriters) {
-                for (PrintWriter writer : clientWriters) {
-                    writer.println(message);
+                String[] info = message.split(":");
+                System.out.println(info[0]);
+                for (ClientHandler c: clientWriters) {
+                    if (c.uid == Integer.parseInt(info[0])) {
+                        c.out.println(info[1]);
+                    }
                 }
             }
         }
