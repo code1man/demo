@@ -4,6 +4,7 @@ import javax.sound.sampled.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 public class VoiceCallClient {
@@ -14,7 +15,11 @@ public class VoiceCallClient {
     public static Socket socket;
 
     public static void main(String[] args) throws IOException {
+        int uid = Integer.parseInt(args[0]);
+        String friendName = args[1];
+
         socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+        new PrintWriter(socket.getOutputStream(), true).println(uid + "#" + friendName);
         System.out.println("已连接到语音通话服务器");
 
         isCalling = true;

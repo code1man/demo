@@ -23,7 +23,7 @@ public class DbUtil {
     public static Connection getConnection() {
         try { // 通过访问数据库的URL获取数据库连接对象
             con = DriverManager.getConnection(
-                    "jdbc:mysql://127.0.0.1:3306/CAC?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai","root","123456");
+                    "jdbc:mysql://127.0.0.1:3306/cac?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai","root","123456");
             System.out.println("数据库连接成功");
         } catch (SQLException e) {
             System.out.println("数据库连接失败");
@@ -105,7 +105,6 @@ public class DbUtil {
         }
         return name;
     }
-
 
     public  static  void  findAllFriends(int userid){
         String sql = "SELECT username FROM t_users u\n" +

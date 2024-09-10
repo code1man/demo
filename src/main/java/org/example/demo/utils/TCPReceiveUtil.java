@@ -3,7 +3,7 @@ package org.example.demo.utils;
 import java.io.*;
 import java.net.Socket;
 
-public class TCPReceiveUtil{
+public class TCPReceiveUtil implements Closeable{
 
     private final Socket client;
     private DataInputStream dis;
@@ -19,14 +19,24 @@ public class TCPReceiveUtil{
     //接受字符串
     public String receiveUTF() {
         try {
-            DataInputStream dis = new DataInputStream(this.client.getInputStream());
-            String result = dis.readUTF();
-            return result;
+            return dis.readUTF();
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("接收字符串失败");
         }
         return null;
+    }
+
+    //接受整型
+    public int receiveInt() {
+        try {
+            DataInputStream dis = new DataInputStream(this.client.getInputStream());
+            return dis.readInt();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("接受好友申请失败");
+        }
+        return 0;
     }
 
     //接收文件、对象
@@ -60,6 +70,12 @@ public class TCPReceiveUtil{
 
     public void release() {
         CloseUtil.close(client);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (dis != null)
+            dis.close();
     }
 }
 

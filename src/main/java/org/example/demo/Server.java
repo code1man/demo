@@ -17,14 +17,6 @@ import java.util.ArrayList;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/*
- * 创建服务器
- * 1、指定端口 使用SeverSocket创建服务器
- * 2、阻塞式等待连接 accept
- * 3、操作：输入输出流操作
- * 4、释放资源
- */
-
 public class Server {
 
     private static CopyOnWriteArrayList<Client> all = new CopyOnWriteArrayList<>();
@@ -33,15 +25,13 @@ public class Server {
         System.out.println("-----Server-----");
 
         try (// 1、指定端口 使用SeverSocket创建服务器
-
-             ServerSocket server = new ServerSocket(8888);
-             ServerSocket serverSocket = new ServerSocket(7777);) {
+             ServerSocket serverSocket = new ServerSocket(7777);
+             ServerSocket serverSocket1 = new ServerSocket(5555);) {
             // 2、阻塞式等待连接 accept
             while (true) {
-                //Socket client = server.accept();
                 Socket socket = serverSocket.accept();
-                //Client c = new Client(client, socket);
-                Client c = new Client(socket);
+                Socket socket1 = serverSocket1.accept();
+                Client c = new Client(socket, socket1);
 
                 all.add(c); // 管理所有的成员
                 c.run();
@@ -52,36 +42,29 @@ public class Server {
 
     static class Client {
 
-        private Socket client;
-
-        private final Socket secondClient;
-
-        private String name;
+        private final Socket client;
+        private final Socket secondSocket;
 
         private boolean isRunning = false;
 
         private TCPSendUtil send;
         private TCPReceiveUtil receive;
+        public final TCPSendUtil send1;
+        public final TCPReceiveUtil receive1;
+        public final TCPSendUtil send2;
+        public final TCPReceiveUtil receive2;
 
-        private final TCPSendUtil send2;
-        private final TCPReceiveUtil receive2;
+        private int uip;
 
-        public Client(Socket client, Socket secondClient) {
+        public Client( Socket client, Socket secondClient) {
+
             this.client = client;
-            this.secondClient = secondClient;
+            this.secondSocket = secondClient;
+
             isRunning = true;
-            this.send = new TCPSendUtil(client);
-            this.receive = new TCPReceiveUtil(client);
-            this.send2 = new TCPSendUtil(secondClient);
-            this.receive2 = new TCPReceiveUtil(secondClient);
 
-            System.out.println("一个客户建立了链接");
-        }
-
-        public Client(Socket secondClient) {
-
-            this.secondClient = secondClient;
-            isRunning = true;
+            this.send1 = new TCPSendUtil(client);
+            this.receive1 = new TCPReceiveUtil(client);
             this.send2 = new TCPSendUtil(secondClient);
             this.receive2 = new TCPReceiveUtil(secondClient);
 
@@ -91,7 +74,7 @@ public class Server {
         public void run() {
             new Thread(() -> {
                 while (isRunning) {
-                    String order = receive2.receiveUTF();
+                    String order = receive1.receiveUTF();
 
                     //接受命令
                     if (order != null) {
@@ -100,115 +83,82 @@ public class Server {
                         //登录
                         if (request[0].equals("LOGIN")) {
                             try {
-                                handleLogin(request[1], request[2], send2);
+                                handleLogin(request[1], request[2], send1);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
 
-//                        if(request[0].equals("LOAD"))
-//                        {
-//
-//                        }
                         //注册
                         if (request[0].equals("REGISTER")) {
                             try {
-                                handleRegister(request[1], request[2], send2);
+                                handleRegister(request[1], request[2], send1);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
                         }
 
-                        //保存聊天记录
-//                        if (request[0].equals("INFORMATION")) {
-//                            handleMessage(Integer.parseInt(request[1]), Integer.parseInt(request[2]), request[3], send2);
-//                        }
-
-
                         //修改用户名
                         if (request[0].equals("UPDATE")) {
-                            handUpdateUserName(request[1], Integer.parseInt(request[2]), send2);
+                            handUpdateUserName(request[1], Integer.parseInt(request[2]), send1);
                         }
 
                         //更新头像
                         if (request[0].equals("UPDATEHEAD")) {
-                            handUpdateHead(Integer.parseInt(request[1]), request[2], send2);
+                            handUpdateHead(Integer.parseInt(request[1]), request[2], send1);
                         }
 
                         //添加好友
                         if (request[0].equals("ADDFRIENDS")) {
-                            handleAddFriends(request[1], Integer.parseInt(request[2]), request[3], send2);
+                            handleAddFriends(request[1], Integer.parseInt(request[2]), request[3], send1);
                         }
 
-///*                        if (request[0].equals("SEARCHFRIENDS")) {
-//                            searchFriends1(Integer.parseInt(request[1]), request[2], send2);
-//                        }
                         if (request[0].equals("SEARCHFRIENDS")) {
-                            searchFriends(request[1], Integer.parseInt(request[2]), send2);
+                            searchFriends(request[1],Integer.parseInt(request[2]), send1);
                         }
 
-                        if (request[0].equals("TOPFRIENDS")) {
-                            goodFriends(Integer.parseInt(request[1]), send2);
+                        if(request[0].equals("TOPFRIENDS")){
+                            goodFriends(Integer.parseInt(request[1]),send1);
                         }
 
-                        if (request[0].equals("VOICECHAT")) {
-                            handleVoiceChat(Integer.parseInt(request[1]), Integer.parseInt(request[2]), send2);
+                        if(request[0].equals("VOICECHAT")) {
+                            handleVoiceChat(Integer.parseInt(request[1]),Integer.parseInt(request[2]),send1);
                         }
 
                         if (request[0].equals("FinishVoiceChat")) {
-
                         }
 
-
                         if (request[0].equals("SHOWPENDINGFRIENDS")) {
-                            showPendingFriends(Integer.parseInt(request[1]), send2);
+                            showPendingFriends(Integer.parseInt(request[1]),send1);
                         }
 
                         if (request[0].equals("SENDMESSAGE")) {
-                            handleMessage(Integer.parseInt(request[1]), request[2], request[3], send2);
+                            handleMessage(Integer.parseInt(request[1]), request[2], request[3], send1);
                         }
 
                         //获取离线信息
                         if(request[0].equals("GETMESSAGE"))
                         {
-                            getMessage(Integer.parseInt(request[1]),request[2],send2);
+                            getMessage(Integer.parseInt(request[1]),request[2],send1);
                         }
 
                         //用户反馈
                         if (request[0].equals("FEEDBACK")) {
-                            feedback(request[1], request[2], send2);
+                            feedback(request[1], request[2], send1);
                         }
 
                         if (request[0].equals("GETUSERINFO")) {
-                            getUserInfo(request[1],send2);
+                            getUserInfo(request[1],send1);
                         }
                         //客户端获取用户id
                         if (request[0].equals("GETID"))
                         {
-                            getID(request[1],send2);
+                            getID(request[1],send1);
                         }
                     }
 
                 }
             }).start();
-
-//           new Thread(() -> {
-//                    if (order != null)
-//                        send2.sendUTF(order);
-//                }
-//            }).start();
-
-//            new Thread(() -> {
-//
-//                while (isRunning) {
-//                    byte[] image = receive.receiveImg();
-//                    if (image != null)
-//                        send.sendImg(image);
-//                    // 这个根据自己写的部分按照需要写
-//                }
-//            }).start();
-//        }
-
 
         }
 
@@ -226,18 +176,8 @@ public class Server {
             all.remove(this);
         }
 
-        public Socket getTargetClient(String target) {
-            for (Client c : all) {
-                if (c.name.equals(target))
-                    return c.client;
-            }
-            return null;
-        }
-
         private void handleLogin(String username, String password, TCPSendUtil sendUtil) throws IOException {
             // 登录逻辑
-
-
             ArrayList<Object> arrayList = new ArrayList<>();
             arrayList.add(username);
 
@@ -280,16 +220,19 @@ public class Server {
                         //new Main().start(new Stage() ); // 启动主界面
                         System.out.println("密码正确");
 
-                        load(username, sendUtil);
+                        String sql2 = "SELECT userid FROM t_users WHERE username = ?";
+                        ArrayList<Object> arrayList2 = new ArrayList<>();
+                        arrayList2.add(username);
+                        ResultSet resultSet1 =DbUtil.executeQuery(sql2, arrayList2);
+                        while (resultSet1.next()) {
+                            this.uip = resultSet1.getInt("userid");
+                        }
+
+                        load(username,sendUtil);
                     } else {
                         System.out.println("密码错误");
                         //加入信息框
-//                            Alert alert = new Alert(Alert.AlertType.ERROR);
-//                            alert.setTitle("登录失败");
                         sendUtil.sendUTF("登录失败");
-//                            alert.setHeaderText(null);
-//                            alert.setContentText("用户名或密码错误！");
-//                            alert.showAndWait();
                     }
 
                 }
@@ -382,8 +325,6 @@ public class Server {
             System.out.println("成功插入：" + count);
             sendUtil.sendUTF("注册成功");
             //加入信息框注册成功！
-
-
         }
 
         private void handleMessage(int senderID, String receiveName, String messageText, TCPSendUtil sendUtil) {
@@ -405,7 +346,6 @@ public class Server {
 
             int count = DbUtil.executeUpdate(sql, arrayList);
             System.out.println("插入了" + count + "条信息");
-            sendUtil.sendUTF("发送信息成功");
         }
 
         //更改用户名
@@ -474,71 +414,42 @@ public class Server {
                     sendUtil.sendUTF("已申请");
                 } else {
 
+                    Client fc = selectClient(DbUtil.getID(friendName));
+                    if (fc != null) {
+                        System.out.println(fc);
+                        fc.send2.sendUTF("pending#" + DbUtil.getUserName(userid));
+                        System.out.println("pending#" + DbUtil.getUserName(userid));
+                    }
                 }
             }
             //接受
             else if (status.equals("accepted")) {
                 //先修改申请时的状态
-                String sql1 = "UPDATE t_friends SET status = ? WHERE userid = ?";
-                int count = DbUtil.executeUpdate(sql1, arrayList2);
-                System.out.println(count + "条记录   " + DbUtil.getID(friendName) + "同意了好友申请");
-                sendUtil.sendUTF("已同意");
+                String sql1 = "UPDATE t_friends SET status = ? WHERE friendID = ?";
+                int count = DbUtil.executeUpdate(sql1,arrayList2);
+                System.out.println(arrayList2.toString());
+                System.out.println(count+"条记录   " + "同意了好友申请");
+                if (selectClient(DbUtil.getID(friendName)) != null)
+                    selectClient(DbUtil.getID(friendName)).send2.sendUTF("ACCEPT#" + DbUtil.getUserName(userid));
 
                 //我们还要再插入一条
                 String sql = "INSERT INTO t_friends  (userid,friendid,status) VALUES (?,?,?)";
                 int count1 = DbUtil.executeUpdate(sql, arrayList1);
                 System.out.println(count + "条记录   " + DbUtil.getID(friendName) + "  和 " + userid + "相互成为了好友");
                 sendUtil.sendUTF(friendName);
-
-                // org.example.demo.Client.friendNames.add(DbUtil.getUserName(DbUtil.getID(friendName)));
-                //另外一端也需要改     ，首先要接收到对方接受的信息
-
             }
             //拒绝
             else {
                 //只用修改申请时的状态
-                String sql = "UPDATE t_friends SET status = ? WHERE userid = ?";
-                int count = DbUtil.executeUpdate(sql, arrayList2);
-                System.out.println(count + "条记录   " + DbUtil.getID(friendName) + "拒绝了好友申请");
-                sendUtil.sendUTF("已拒绝");
+                String sql = "UPDATE t_friends SET status = ? WHERE friendID = ?";
+                int count = DbUtil.executeUpdate(sql,arrayList2);
+                System.out.println(count+"条记录   " + "拒绝了好友申请");
+                if (selectClient(DbUtil.getID(friendName)) != null)
+                    selectClient(DbUtil.getID(friendName)).send2.sendUTF("REJECT#" + DbUtil.getID(friendName));
             }
-
         }
 
-        /*private void searchFriends1(int userid, String like ,TCPSendUtil sendUtil){
-            String getFriendsSql1 = "SELECT username " +
-                    "FROM t_users u " +
-                    "INNER JOIN t_friends f ON u.userID = f.friendID " +
-                    "WHERE f.userID = ? AND f.status = 'accepted' " +
-                    "AND u.username LIKE ?";
-
-            ArrayList<Object> arrayList  = new ArrayList<>();
-            arrayList.add(userid);
-            arrayList.add(like);
-
-            ResultSet resultSet = DbUtil.executeQuery(getFriendsSql1,arrayList);
-            while (true) {
-                try {
-                    if (!resultSet.next())
-                    {
-                        //System.out.println("查找为空");
-                        break;
-                    }
-                    //System.out.println(resultSet.getString("u.username"));
-                    org.example.demo.Client.selectFriendName.add(resultSet.getString("u.username"));
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            //org.example.demo.Client.friendResultSet = DbUtil.executeQuery(getFriendsSql1,arrayList);
-        }*/
-
-        private void searchFriends(String search, int userid, TCPSendUtil sendUtil) {
-//            String getFriendsSql = "\n" +
-//                    "SELECT u.username FROM t_users u \n" +
-//                    "INNER JOIN t_friends f ON u.userid = f.friendid \n" +
-//                    "WHERE f.userid = ? AND f.status = 'accepted'";
+        private void searchFriends(String search,int userid,TCPSendUtil sendUtil){
             String getFriendsSql = "SELECT u.userName FROM t_users u \n" +
                     "        WHERE u.userName LIKE ? \n" +
                     "        AND u.userID NOT IN (SELECT friendID FROM t_friends WHERE userID = ? AND status = 'accepted' ) \n" +
@@ -612,7 +523,7 @@ public class Server {
             try {
                 StringBuilder result = new StringBuilder();
                 while (resultSet.next()) {
-                    result.append(DbUtil.getUserName(Integer.parseInt(resultSet.getString("userID")))).append(" "); // 注意这里的 "username" 是小写的
+                    result.append(DbUtil.getUserName(Integer.parseInt(resultSet.getString("userID")))).append("#"); // 注意这里的 "username" 是小写的
                 }
 
                 // 如果有结果，去掉最后的空格并发送
@@ -715,6 +626,16 @@ public class Server {
 
             sendUtil.sendUTF(result.toString());
 
+        }
+
+        private Client selectClient(int userID) {
+            System.out.println(all);
+            for (Client c: all) {
+                if (userID == c.uip) {
+                    return c;
+                }
+            }
+            return null;
         }
 
         private void getUserInfo(String userName, TCPSendUtil sendUtil) {

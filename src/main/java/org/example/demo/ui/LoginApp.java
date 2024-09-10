@@ -12,24 +12,17 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-
 import org.example.demo.Client;
-import org.example.demo.Server;
-import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 
 public class LoginApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-
 
         primaryStage.setTitle("用户登录");
         primaryStage.getIcons().add(new Image("/logo.jpg"));
@@ -150,11 +143,12 @@ public class LoginApp extends Application {
         //由于外部还没有完成连接代码
         try {
             Client.client = new Socket("127.0.0.1",7777);
+            Client.secondClient = new Socket("127.0.0.1",5555);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
 
-        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client);
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
         // 登录按钮点击事件
@@ -177,15 +171,16 @@ public class LoginApp extends Application {
             if(info.equals("登陆失败"))
             {
                 System.out.println("用户名或密码错误！");
-            } else
-            {
+            }
+            else {
 
-//                String request2 = "LOAD "+Client.name;
-//                sendUtil.sendUTF(request2);
+//              String request2 = "LOAD "+Client.name;
+//              sendUtil.sendUTF(request2);
 
                 String[] load =  info.split(" ");
                 Client.uid =load[0] ;
-                Client.avatarUrl = load[1];
+                if (load.length > 2)
+                    Client.avatarUrl = load[1];
                 //Client.controlTimes =load[2];
                 //Client.goodRatingPercentage = load[3];
 

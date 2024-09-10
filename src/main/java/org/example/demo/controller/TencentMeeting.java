@@ -1,16 +1,15 @@
 // 远程投屏
-package org.example.demo.ui;
+package org.example.demo.controller;
 
-import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import org.example.demo.Main;
+import org.example.demo.ui.Home;
 
 public class TencentMeeting {
 

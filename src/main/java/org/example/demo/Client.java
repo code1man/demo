@@ -4,7 +4,6 @@ package org.example.demo;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
-
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
@@ -12,18 +11,14 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-
-//import static org.example.demo.Main.loginController;
+import static org.example.demo.ui.Home.controlWindow;
 
 public class Client {
 
@@ -47,13 +42,17 @@ public class Client {
 
     public static Socket client = null;
     public static Socket secondClient = null;
+    public static Socket RemoteControlClient = null;
+    public static Socket friendClient = null;
+    public static Socket CameraClient = null;
+    public static Socket RemoteCastClient = null;
 
-    private Thread recieveImgThread;
-    private Thread sendImgThread;
-    private Thread robotThread;
+
+    private static Thread recieveImgThread;
+    private static Thread sendImgThread;
+    private static Thread robotThread;
 
     public static Map<String, Stage> chatWindows = new HashMap<>();
-
 
     public void init() {
         sendImgThread = new Thread(() -> {
@@ -85,7 +84,7 @@ public class Client {
                 ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
                 try {
                     BufferedImage image = ImageIO.read(bais);
-                    //loginController.updateImage(image);
+                    controlWindow.updateImage(image);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -93,7 +92,7 @@ public class Client {
         });
 
         robotThread = new Thread(()->{
-            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.secondClient);
+            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.RemoteControlClient);
             try {
                 Robot robot = new Robot();
 
@@ -161,24 +160,25 @@ public class Client {
         });
     }
 
-    public void startRemoteHash() {
+    public static void startRemoteHash() {
         sendImgThread.start();
+    }
+
+    public static void recieveRemoteHash() {
         recieveImgThread.start();
     }
 
-    public void startRemoteControl(){
+    public static void startRemoteControl(){
         sendImgThread.start();
-        recieveImgThread.start();
         robotThread.start();
     }
 
-    public void stopRemoteControl(){
+    public static void stopRemoteControl(){
         sendImgThread.interrupt();
-        recieveImgThread.interrupt();
         robotThread.interrupt();
     }
 
-    public void stopRemoteHash(){
+    public static void stopRemoteHash(){
         sendImgThread.interrupt();
         recieveImgThread.interrupt();
     }

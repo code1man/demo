@@ -7,7 +7,7 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
 
-public class TCPSendUtil {
+public class TCPSendUtil implements Closeable{
     private final Socket client;
     private final DataOutputStream dos;
 
@@ -30,6 +30,17 @@ public class TCPSendUtil {
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("发送字符串信息失败");
+        }
+    }
+
+    public void sendInt(int msg)
+    {
+        try {
+            dos.writeInt(msg);
+            dos.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("发送好友申请失败");
         }
     }
 
@@ -106,5 +117,11 @@ public class TCPSendUtil {
 
     public void release() {
         CloseUtil.close(client);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (dos != null)
+            dos.close();
     }
 }

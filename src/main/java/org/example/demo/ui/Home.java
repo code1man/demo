@@ -2,26 +2,24 @@ package org.example.demo.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-
-import javafx.beans.property.StringProperty;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
-
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.example.demo.Client;
+import org.example.demo.Main;
+import org.example.demo.controller.shenqingController;
 import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
@@ -31,8 +29,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,8 +57,15 @@ public class Home extends Application {
     private AnchorPane rightPane; // 使用 AnchorPane 来控制右侧内容块的位置
     private VBox rightContentBox; // 右侧内容块
     private TextField searchField; // 搜索框
+    private ListView<HBox> targetListView;
+
+    private TCPSendUtil sendUtil = new TCPSendUtil(Client.client);
+    private TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+    private ArrayList<String> selectedFriends = new ArrayList<>();
 
     public static ImageView userAvatar;
+    public static yuanchengkongzhi controlWindow; //远程控制方便更改ImageView
+    // 远程投屏是用fxml写的，名字是 TencentMeeting
 
     // 用于缓存好友的聊天窗口
     public static void main(String[] args) {
@@ -71,54 +74,61 @@ public class Home extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        // 初始化
+        new Client().init();
 
-
-        //先连接
-        try {
-            Client.client = new Socket("127.0.0.1",7777);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
-//
+        // 前置工作
         new Thread(()->{
             String request2 = "SHOWPENDINGFRIENDS " +Client.uid;
             sendUtil.sendUTF(request2);
-            System.out.println(receiveUtil.receiveUTF());
+
+            String s = receiveUtil.receiveUTF();
+            if (!s.isEmpty()) {
+                String[] info = s.split("#");
+                Platform.runLater(() -> {
+                    for (int i = 1; i <= info.length; i++) {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/demo/shenqing.fxml"));
+                        Parent root = null;
+                        try {
+                            root = loader.load();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        Popup popup = new Popup();
+                        popup.getContent().add(root);
+
+                        // Calculate popup position
+                        double screenWidth = primaryStage.getWidth();
+                        double screenHeight = primaryStage.getHeight();
+                        double popupWidth = 100;  // Adjust as needed
+                        double popupHeight = 100;
+
+                        // Position the popup in the bottom-right corner
+                        double popupX = screenWidth - popupWidth - 10; // Margin from screen edge
+                        double popupY = screenHeight - popupHeight - 10; // Margin from screen edge
+                        // 从服务器数据库读来的数据
+                        shenqingController controller = loader.getController();
+                        controller.updateLabels(info[i - 1], "/touxiang.png");
+                        controller.setPopup(popup);
+
+                        // Position the popup near the button (e.g., bottom-right)
+                        popup.show(primaryStage, popupX, popupY);
+                    }
+                });
+            }
         }
         ).start();
 
-
-        Button applyButton = new Button("申请");
-        Button acceptButton =  new Button("接受");
-        Button refuseButton =  new Button("拒绝");
-
-        acceptButton.setOnAction(ev->{
-            String friendName = "";//这里后面要改从消息列表上取
-            String request = "ADDFRIENDS"+" "+"accepted"+" "+Client.uid+" "+friendName;
-
-            sendUtil.sendUTF(request);
-
-            Client.friendNames.add(receiveUtil.receiveUTF()) ;
-
-        });
-
-        applyButton.setOnAction(ev->{
-
-
-        });
-
-        refuseButton.setOnAction(ev->{
-            String friendName = "";     //这里后面要改，从检索出来的消息列表取
-
-            String request = "ADDFRIENDS"+" "+"blocked"+" "+Client.uid+" "+friendName;
-
-            sendUtil.sendUTF(request);
-
-            System.out.println(receiveUtil.receiveUTF());
-
+        // 全程监听客户端输入
+        Thread receiveApplyThread = new Thread(() -> {
+            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.secondClient);
+            while (!Thread.currentThread().isInterrupted()) {
+                String message = receiveUtil.receiveUTF();
+                if (message != null) {
+                    processMessage(message);
+                }
+            }
         });
 
         Main.stage = primaryStage;
@@ -257,8 +267,8 @@ public class Home extends Application {
         // 使用 AnchorPane 放置右侧内容块
         rightPane = new AnchorPane();
         rightPane.getChildren().add(rightContentBox);
-        AnchorPane.setRightAnchor(rightContentBox, 10.0); // 右侧距离
-        AnchorPane.setTopAnchor(rightContentBox, 30.0);   // 顶部距离
+        AnchorPane.setRightAnchor(rightContentBox, Double.valueOf(10.0)); // 右侧距离
+        AnchorPane.setTopAnchor(rightContentBox, Double.valueOf(30.0));   // 顶部距离
 
         root.setCenter(rightPane); // 将右侧内容区域设置到 BorderPane 的中心位置
 
@@ -335,10 +345,11 @@ public class Home extends Application {
                             recommendationList.getItems().add(itemBox);
                         }
                     }
-                }
+
                 }
             }
-        });
+
+                }  });
 
 // 初始化时展示推荐的用户
         recommendationPopup.getContent().add(recommendationList);
@@ -350,16 +361,23 @@ public class Home extends Application {
                 recommendationList.setPrefWidth(searchField.getWidth());
                 recommendationPopup.show(window, window.getX() + searchField.localToScene(0, 0).getX() + searchField.getScene().getX(),
                         window.getY() + searchField.localToScene(0, 0).getY() + searchField.getHeight() + searchField.getScene().getY());
-            }
+            } else
+                recommendationPopup.hide();
         });
 
 // 确保点击其他地方关闭推荐框
         root.setOnMouseClicked(e -> {
-            if (!searchField.isFocused() && recommendationPopup.isShowing()) {
-                recommendationPopup.hide();
+            if (recommendationPopup.isShowing()) {
+                Bounds popupBounds = recommendationPopup.getContent().get(0).localToScreen(
+                        recommendationPopup.getContent().get(0).getBoundsInLocal()
+                );
+                Point2D clickPoint = new Point2D(e.getScreenX(), e.getScreenY());
+
+                if (!popupBounds.contains(clickPoint)) {
+                    recommendationPopup.hide();
+                }
             }
         });
-
 
         // 确保搜索框保持焦点时，不会关闭推荐框
         searchField.setOnKeyPressed(e -> {
@@ -375,17 +393,94 @@ public class Home extends Application {
         Main.scene = scene;
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        receiveApplyThread.start();
+    }
+
+    private void processMessage(String message) {
+        Platform.runLater(() -> {
+            System.out.println(message);
+            try {
+                String[] info = message.split("#");
+                if (info.length > 0) {
+                    if (info[0].equals("pending")) {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/example/demo/shenqing.fxml"));
+                        Pane root;
+                        try {
+                            root = loader.load();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+
+                        Popup popup = new Popup();
+                        popup.getContent().add(root);
+
+                        double screenWidth = Main.stage.getWidth();
+                        double screenHeight = Main.stage.getHeight();
+                        double popupWidth = root.getPrefWidth();
+                        double popupHeight = root.getPrefHeight();
+
+                        double popupX = screenWidth - popupWidth - 10; // Margin from screen edge
+                        double popupY = screenHeight - popupHeight - 10; // Margin from screen edge
+
+                        shenqingController controller = loader.getController();
+                        controller.setPopup(popup); // Pass the popup to the controller
+                        controller.updateLabels(info[1], "/touxiang.png"); // Example data
+
+                        popup.show(Main.stage, popupX, popupY);
+                    } else if (info[0].equals("ACCEPT")) {
+                        // Handle "ACCEPT" case
+                        Client.friendNames.add(info[1]);
+                    } else if (info[0].equals("REJECT")) {
+                        System.out.println("你被" + info[1] + "拒绝了");
+                    } else if (info[0].equals("REMOTECONTROLSTART")) {
+                        // Create a new Dialog
+                        Dialog<ButtonType> dialog = new Dialog<>();
+                        dialog.setTitle("远程操控邀请");
+                        dialog.setHeaderText(null); // No header text
+
+                        // Create the content of the dialog
+                        Label messageLabel = new Label( info[1] + "邀请您进行远程操控");
+
+                        Button btnAccept = new Button("接受");
+                        btnAccept.setOnAction(event -> {
+                            System.out.println("Accepted");
+                            dialog.close(); // Close the dialog when accepted
+                            new yuanchengkongzhi01().start(Main.stage);
+                            sendUtil.sendUTF("ACCEPTREMOTECONTROL" + info[1]);
+                        });
+
+                        Button btnReject = new Button("拒绝");
+                        btnReject.setOnAction(event -> {
+                            System.out.println("Rejected");
+                            dialog.close(); // Close the dialog when rejected
+                            sendUtil.sendUTF("REJECTREMOTECONTROL " + info[1]);
+                        });
+
+                        VBox content = new VBox(10, messageLabel, btnAccept, btnReject);
+                        content.setStyle("-fx-padding: 10;");
+
+                        // Set the content of the DialogPane
+                        DialogPane dialogPane = dialog.getDialogPane();
+                        dialogPane.setContent(content);
+                        dialogPane.getButtonTypes().add(ButtonType.CANCEL); // Add default cancel button
+
+                        // Show the dialog and wait for user response
+                        dialog.showAndWait();
+                    } else if (info[0].equals("REMOTECONTROLEND")) {
+
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private HBox createRecommendationItem(String userName) {
         //----------------------------------------------------------------------------
         //先连接
-        try {
-            Client.client = new Socket("127.0.0.1",7777);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
         TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
         //---------------------------------------------------------------------------
@@ -399,7 +494,6 @@ public class Home extends Application {
         String goodRatingPercentage = info[2];
         String status = info[0];
 
-        // 创建好友条的 HBox
         HBox itemBox = new HBox(10);
         itemBox.setAlignment(Pos.CENTER_LEFT);
         itemBox.setPadding(new Insets(10));
@@ -434,7 +528,7 @@ public class Home extends Application {
             System.out.println("添加好友: " + userName);
             String requestAdd = "ADDFRIENDS" + " " + "pending" + " " + Client.uid + " " + userName;
             sendUtil.sendUTF(requestAdd);
-            System.out.println(receiveUtil.receiveUTF());
+            //System.out.println(receiveUtil.receiveUTF());
         });
 
         // 添加一个空白区域，用于布局的扩展和对齐
@@ -462,7 +556,7 @@ public class Home extends Application {
         ImageView avatarImageView = new ImageView();
         avatarImageView.setFitWidth(100);
         avatarImageView.setFitHeight(100);
-        avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px;");
+        avatarImageView.setStyle("-fx-border-radius: 50; -fx-background-radius: 50; -fx-border-color: lightgray; -fx-border-width: 2px; -fx-start-margin: 10; -fx-end-margin: 20");
 
         // 创建头像框布局，放置在用户信息上方
         VBox avatarBox = new VBox(10);
@@ -516,18 +610,6 @@ public class Home extends Application {
     private void updateRightContent(String content) {
         // 清空现有内容
         rightContentBox.getChildren().clear();
-
-        //先连接
-        try {
-            Client.client = new Socket("127.0.0.1",7777);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-
-        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
-
-
         switch (content) {
 
             case "默认页面":
@@ -588,24 +670,6 @@ public class Home extends Application {
                 Runnable refreshFriendsList = () -> {
                     String search = searchField.getText(); // 获取搜索框中的内容
 
-/*                    ArrayList<Object> arrayList = new ArrayList<>();
-                    arrayList.add(Client.uid);
-                   // ResultSet friendResultSet = null;
-
-                    // 如果有搜索内容，则使用带搜索条件的 SQL，否则使用默认 SQL
-                    if (!search.equals("") && search != null) {
-                        String request = "SEARCHFRIENDS1"+" "+Client.uid+" "+"%"+search+"%";
-                        request.indexOf(search);
-                        sendUtil.sendUTF(request);
-
-//                        arrayList.add("%" + search + "%");
-//                        friendResultSet = DbUtil.executeQuery(getFriendsSql1, arrayList);
-                    } else {
-                        String request = "SEARCHFRIENDS2"+" "+Client.uid;
-                        sendUtil.sendUTF(request);
-                        //friendResultSet = DbUtil.executeQuery(getFriendsSql, arrayList);
-
-                    }*/
                     Client.selectFriendName.clear();
                     for (String fname: Client.friendNames) {
                         if (fname.indexOf(search) != -1) {
@@ -707,7 +771,6 @@ public class Home extends Application {
                         "-fx-border-radius: 15; " + // 设置弧形边框
                         "-fx-background-radius: 15;"); // 设置背景弧形边框
 
-
                 // 创建一个主 VBox，用于放置搜索框和滑动框
                 VBox mainBox = new VBox(10);
                 mainBox.getChildren().addAll(searchBox, scrollPane);
@@ -740,6 +803,8 @@ public class Home extends Application {
 
                 VBox vBox = new VBox(10);
                 vBox.setAlignment(Pos.CENTER_LEFT);
+                vBox.setSpacing(10);
+                vBox.setPadding(new Insets(20, 0, 0, 10));
 
                 Button editInfoButton = new Button("修改信息");
 
@@ -747,6 +812,8 @@ public class Home extends Application {
                 HBox hBox = new HBox(10);
                 hBox.setAlignment(Pos.CENTER_LEFT);
                 hBox.getChildren().addAll(profileImageView, vBox);
+
+                hBox.setPadding(new Insets(10));
 
                 Pane pane = new Pane();
                 pane.getChildren().add(hBox);
@@ -766,8 +833,8 @@ public class Home extends Application {
                 // Ensure that the stage is valid
                 Stage stage = (Stage) rightContentBox.getScene().getWindow();
                 if (stage != null) {
-                    popup.setX(130);
-                    popup.setY(300);
+                    popup.setX(stage.getX()+246);
+                    popup.setY(stage.getY()+100);
                     popup.show(stage);
                 } else {
                     System.out.println("Stage is null.");
@@ -780,18 +847,10 @@ public class Home extends Application {
                         //本地以及数据库中的数据也需要更新
 
                         //由于外部还没有完成连接代码
-//                        try {
-//                            Client.client = new Socket("127.0.0.1",7777);
-//                        } catch (IOException ex) {
-//                            throw new RuntimeException(ex);
-//                        }
-//
-//                        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-//                        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
 
                         String request = "UPDATE"+" "+Client.name+" "+Client.uid;
                         sendUtil.sendUTF(request);
-                        System.out.println(receiveUtil.receiveUTF());
+                        // System.out.println(receiveUtil.receiveUTF());
 
                         try {
                             new personalinfo().start(new Stage());
@@ -800,9 +859,7 @@ public class Home extends Application {
                         }
                     });
 
-
-
-                if (rightContentBox != null) {
+                    if (rightContentBox != null) {
                       //rightContentBox.getChildren().clear();  // 清除之前的内容
                      //rightContentBox.getChildren().add(vBox);  // 添加用户信息框
                     }
@@ -822,7 +879,6 @@ public class Home extends Application {
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 2, 2);");
 
                 // 图片按钮1：远程投屏
-                // 图片按钮1：远程投屏
                 ImageView leftImage = new ImageView(new Image(getClass().getResourceAsStream("/touping.png")));
                 leftImage.setFitWidth(100);
                 leftImage.setFitHeight(100);
@@ -830,7 +886,6 @@ public class Home extends Application {
                 leftButton.setGraphic(leftImage);
                 leftButton.setStyle("-fx-background-color: transparent;"); // 去除按钮默认样式
                 leftButton.setOnAction(e -> openScreenCastingWindow()); // 点击事件，弹出 touping 窗口
-
 
                 // 小标题1：远程投屏
                 Label leftLabel = new Label("远程投屏");
@@ -842,15 +897,14 @@ public class Home extends Application {
                 leftBox.getChildren().addAll(leftButton, leftLabel);
 
                 // 图片按钮2：远程控制
-                // 图片按钮2：远程控制
                 ImageView rightImage = new ImageView(new Image(getClass().getResourceAsStream("/yuanchengkongzhi.png")));
                 rightImage.setFitWidth(100);
                 rightImage.setFitHeight(100);
                 Button rightButton = new Button();
                 rightButton.setGraphic(rightImage);
                 rightButton.setStyle("-fx-background-color: transparent;");
-                rightButton.setOnAction(e -> openControlWindow()); // 点击事件，弹出 yuanchengkongzhi 窗口
 
+                rightButton.setOnAction(e -> openControlWindow()); // 点击事件，弹出 yuanchengkongzhi 窗口
 
                 // 小标题2：远程控制
                 Label rightLabel = new Label("远程控制");
@@ -884,13 +938,11 @@ public class Home extends Application {
                 dropDownBox.getChildren().addAll(dropDownButton, promptLabel);
 
                 // 多选列表框
-                ListView<HBox> targetListView = new ListView<>();
+                targetListView = new ListView<>();
                 targetListView.setPrefWidth(200);
                 targetListView.setVisible(false); // 初始设置为隐藏
 
-
                 //12
-                //String[] targets = {"XX01", "XX02", "XX03", "XX04", "XX05"};
                 for (String target : Client.friendNames) {
                     CheckBox checkBox = new CheckBox(target);
                     hBox = new HBox(10);
@@ -945,6 +997,7 @@ public class Home extends Application {
                 break;
         }
     }
+
     // 打开 Chat 窗口的方法
 
     private void openChatWindow(String friendname) {
@@ -969,95 +1022,70 @@ public class Home extends Application {
                     chatWindow.start(chatStage); // 启动新的 Chat 窗口
                     // 初始化聊天区域
 
-                    //先连接----------------------------------------------------------------
-                    try {
-                        Client.client = new Socket("127.0.0.1",7777);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-
                     TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
                     TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
                     //---------------------------------------------------------------------
 
-                    String request = "GETMESSAGE "+Client.uid+" "+friendname;
-                    sendUtil.sendUTF(request);
-                    String result = receiveUtil.receiveUTF();
-                    String []results = result.split("#");
-                    TextArea chatArea = chatWindow.getChatArea();
+                    new Thread(()->{
+                        Platform.runLater(()->{
+                            String request = "GETMESSAGE "+Client.uid+" "+friendname;
+                            sendUtil.sendUTF(request);
+                            String result = receiveUtil.receiveUTF();
+                            String []results = result.split("#");
+                            TextArea chatArea = chatWindow.getChatArea();
+                            //最新的离线消息时间
+                            String time1 = results[0];
+                            System.out.println("time1"+time1);
+                            if (results.length>=3) {
+                                // 以步长3遍历数组
+                                for (int i = 1; i <= results.length - 3; i +=3) {
+                                    // 假设每条消息格式为 "时间 发送者 内容"
+                                    String sender= results[i];
+                                    String content= results[i + 1];
+                                    String  time= results[i + 2];
 
-                    //最新的离线消息时间
-                    String time1 = results[0];
-                    System.out.println("time1"+time1);
-//                    // 用来存储结果的 List
-//                    List<String> resultList = new ArrayList<>();
-//
-//// 用于积累字符构成的单词
-//                    StringBuilder currentElement = new StringBuilder();
-//
-//                    for (char c : result.toCharArray()) {
-//                        if (c == ' ') {
-//                            // 如果是空格，先将之前积累的单词加入结果列表
-//                            if (currentElement.length() > 0) {
-//                                resultList.add(currentElement.toString());
-//                                currentElement.setLength(0); // 清空 StringBuilder
-//                            }
-//                            // 将空格作为单独的元素加入
-//                            resultList.add(" ");
-//                        } else {
-//                            // 否则继续积累字符到当前元素
-//                            currentElement.append(c);
-//                        }
-//                    }
-//
-//// 处理最后一个单词（如果有）
-//                    if (currentElement.length() > 0) {
-//                        resultList.add(currentElement.toString());
-//                    }
-//
-//// 将结果转换为数组
-//                    String[] resultArray = resultList.toArray(new String[0]);
+                                    String formattedMessage = "";
+                                    formattedMessage =  time + " " + sender + ": " + content ;
 
-                    //有离线好友才行
-                if (results.length>=3) {
-                    // 以步长3遍历数组
-                    for (int i = 1; i <= results.length - 3; i +=3) {
-                        // 假设每条消息格式为 "时间 发送者 内容"
-                        String sender= results[i];
-                        String content= results[i + 1];
-                        String  time= results[i + 2];
+                                    String request1 = "GETID "+friendname;
+                                    sendUtil.sendUTF(request1);
 
+                                    int id  = Integer.parseInt(receiveUtil.receiveUTF());
 
+                                    File chatFile = new File(id + "_chat.txt");
+                                    String lastTimestamp = "";
+                                    if (chatFile.exists()) {
+                                        try (BufferedReader reader = new BufferedReader(new FileReader(chatFile))) {
+                                            String lastLine = "";
+                                            while ((lastLine = reader.readLine()) != null) {
+                                                String[] result1 = lastLine.split(" ");
+                                                //System.out.println(lastLine);
+                                                // 找到最后一行，假设最后一行记录了时间戳
+                                                lastTimestamp = result1[0]+" "+result1[1];  // 假设时间戳在第一位
+                                                //System.out.println(lastTimestamp);
+                                            }
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
 
-                        String formattedMessage = "";
-                        formattedMessage =  time + " " + sender + ": " + content ;
+                                    String  txtLastTime= lastTimestamp;
+                                    System.out.println("txtlasttime"+txtLastTime);
+                                    if (time.compareTo(txtLastTime) > 0) {
+                                        chat.saveMessageToFile(friendname, formattedMessage, time);
+                                    } else {
+                                        System.out.println("跳过重复消息: " + formattedMessage);
+                                    }
+                                }
+                            }
+                            else
+                                System.out.println("不存在离线信息");
+                            chatArea.appendText(loadChatHistory(friendname)); // 加载历史记录
+                            // 保存聊天窗口到缓存
+                            Client.chatWindows.put(friendname, chatStage);
+                        });
+                    }).start();
 
-//                        // 显示在聊天区域
-//                        chatArea.appendText(formattedMessage+"\n");
-
-                        // 追加到 StringBuilder 中
-                        //offlineMessages.append(formattedMessage);
-
-                        //这里也要大于原本里面的才能插
-                        String  txtLastTime= chat.getTXTLastTime(friendname);
-                        System.out.println("txtlasttime"+txtLastTime);
-                        if (time.compareTo(txtLastTime) > 0) {
-                            chat.saveMessageToFile(friendname, formattedMessage, time);
-                        } else {
-                            System.out.println("跳过重复消息: " + formattedMessage);
-                        }
-                    }
-                }
-                else
-                    System.out.println("不存在离线信息");
-
-
-
-
-                    chatArea.appendText(loadChatHistory(friendname)); // 加载历史记录
-
-                    // 保存聊天窗口到缓存
-                    Client.chatWindows.put(friendname, chatStage);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1067,38 +1095,54 @@ public class Home extends Application {
 
     // 新窗口方法：用于显示屏幕投屏的窗口
     private void openScreenCastingWindow() {
-
         try {
             Main.setRoot("TencentMeeting");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    // 获取被选中的好友名
+    private void getSelectedFriends() {
+        selectedFriends.clear();
+        for (HBox hBox : targetListView.getItems()) {
+            CheckBox checkBox = (CheckBox) hBox.getChildren().get(0);
+            if (checkBox.isSelected()) {
+                selectedFriends.add(checkBox.getText());
+            }
+        }
     }
 
     // 新窗口方法：用于显示设备控制的窗口
     private void openControlWindow() {
-        Platform.runLater(() -> {
-            try {
-                // 创建 yuanchengkongzhi 窗口的实例并启动
-                yuanchengkongzhi controlWindow = new yuanchengkongzhi();
-                Stage controlStage = new Stage();
-                controlWindow.start(controlStage); // 启动 yuanchengkongzhi 窗口
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
+
+        getSelectedFriends();
+
+        if (selectedFriends.size() > 0) {
+            Platform.runLater(() -> {
+                try {
+                    // 创建 yuanchengkongzhi 窗口的实例并启动
+                    controlWindow = new yuanchengkongzhi();
+                    Stage controlStage = new Stage();
+                    sendUtil.sendUTF("REMOTECONTROLSTART " + selectedFriends.get(0));
+
+                    new Thread(() -> {
+                        String recieve = new TCPReceiveUtil(Client.RemoteControlClient).receiveUTF();
+                        String[] result = recieve.split("#");
+                        if (result[0].equals("ACCEPTREMOTECONTROL"))
+                            controlWindow.start(controlStage); // 启动 yuanchengkongzhi 窗口
+                    }).start();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+        }
     }
 
     // 加载聊天历史的方法，从 txt 文件中读取并返回
     private String loadChatHistory(String friendName) {
 
         //先连接----------------------------------------------------------------
-        try {
-            Client.client = new Socket("127.0.0.1",7777);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
 
         TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
@@ -1124,4 +1168,5 @@ public class Home extends Application {
 
         return chatHistory.toString();
     }
+
 }
