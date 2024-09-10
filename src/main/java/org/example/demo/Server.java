@@ -1,5 +1,6 @@
 package org.example.demo;
 
+import javafx.scene.control.Alert;
 import org.example.demo.utils.CloseUtil;
 
 import org.example.demo.utils.DbUtil;
@@ -232,7 +233,7 @@ public class Server {
                     } else {
                         System.out.println("密码错误");
                         //加入信息框
-                        sendUtil.sendUTF("登录失败");
+                        sendUtil.sendUTF("密码错误");
                     }
 
                 }

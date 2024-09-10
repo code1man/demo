@@ -4,10 +4,7 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -158,43 +155,66 @@ public class LoginApp extends Application {
             String username = userNameField.getText();
             Client.name = username;
             String password = passwordField.getText();
+
+            // 检查用户名和密码是否为空
+            if (username == null || username.isEmpty()) {
+                Client.showAlert(Alert.AlertType.WARNING, "登录错误", "用户名不能为空！");
+                System.out.println("用户名不能为空！");
+                return;
+            }
+            if (password == null || password.isEmpty()) {
+                Client.showAlert(Alert.AlertType.WARNING, "登录错误", "密码不能为空！");
+                System.out.println("密码不能为空！");
+                return;
+            }
+
+
             String request = "LOGIN"+" "+username+" "+password;
+
+
 
             //发送登录请求
             sendUtil.sendUTF(request);
 
             //接收服务器响应
-            String info = receiveUtil.receiveUTF();
-            System.out.println(info);
+           // new Thread(()->{
+                String info = receiveUtil.receiveUTF();
+                System.out.println(info);
 
-            //如果成功，则跳转，如果失败则信息框提示
-            if(info.equals("登陆失败"))
-            {
-                System.out.println("用户名或密码错误！");
-            }
-            else {
+                //如果成功，则跳转，如果失败则信息框提示
+                if(info.equals("用户名不存在！"))
+                {
+                    Client.showAlert(Alert.AlertType.ERROR, "登录失败", "用户名不存在！");
+                    System.out.println("用户名不存在！");
+                }
+                else if(info.equals("密码错误"))
+                {
+                    Client.showAlert(Alert.AlertType.ERROR, "登录失败", "密码错误！");
+                    System.out.println("密码错误！");
+                }
+                else {
 
 //              String request2 = "LOAD "+Client.name;
 //              sendUtil.sendUTF(request2);
 
-                String[] load =  info.split(" ");
-                Client.uid =load[0] ;
-                if (load.length > 2)
-                    Client.avatarUrl = load[1];
-                //Client.controlTimes =load[2];
-                //Client.goodRatingPercentage = load[3];
+                    String[] load =  info.split(" ");
+                    Client.uid =load[0] ;
+                    if (load.length > 2)
+                        Client.avatarUrl = load[1];
+                    //Client.controlTimes =load[2];
+                    //Client.goodRatingPercentage = load[3];
 
-                //有好友才载入好友
-                if(load.length>=5) {
-                    String[] load1 = load[4].split("#");
-                    for (int i = 0; i < load1.length; i++) {
-                        Client.friendNames.add(load1[i]);
+                    //有好友才载入好友
+                    if(load.length>=5) {
+                        String[] load1 = load[4].split("#");
+                        for (int i = 0; i < load1.length; i++) {
+                            Client.friendNames.add(load1[i]);
+                        }
                     }
-                }
 
-                System.out.println("个人数据载入到本地");
-                System.out.println(Client.uid +" "+ Client.name+" "+Client.avatarUrl+" "+Client.controlTimes+" "+Client.goodRatingPercentage);
-                //将一部分登录信息存入本地
+                    System.out.println("个人数据载入到本地");
+                    System.out.println(Client.uid +" "+ Client.name+" "+Client.avatarUrl+" "+Client.controlTimes+" "+Client.goodRatingPercentage);
+                    //将一部分登录信息存入本地
 //                String sql = "SELECT userid,avatarUrl,controltimes,goodratingpercentage FROM t_users\n" +
 //                        "WHERE username = ?";
 //
@@ -227,8 +247,10 @@ public class LoginApp extends Application {
 //                    throw new RuntimeException(ex);
 //                }
 
-                new Home().start(primaryStage); // 启动主界面
-            }
+                    new Home().start(primaryStage); // 启动主界面
+                }
+            //}).start();
+
 
         });
 
@@ -237,15 +259,36 @@ public class LoginApp extends Application {
             // 获取用户名和密码输入
             String username = userNameField.getText();
             String password = passwordField.getText();
+
+            if (username == null || username.isEmpty()) {
+                Client.showAlert(Alert.AlertType.WARNING, "注册失败", "用户名不能为空，请重试！");
+                System.out.println("用户名不能为空！");
+                return;
+            }
+            if (password == null || password.isEmpty()) {
+                Client.showAlert(Alert.AlertType.WARNING, "注册失败", "密码不能为空，请重试！");
+                System.out.println("密码不能为空！");
+                return;
+            }
+
             String request = "REGISTER"+" "+username+" "+password;
 
             sendUtil.sendUTF(request);
 
+            //new Thread(()->{
+                //接收服务器响应
+                String info = receiveUtil.receiveUTF();
+                if(info.equals("用户名已存在！"))
+                {
+                    Client.showAlert(Alert.AlertType.ERROR, "注册失败", "用户名已存在，请重试！");
+                }
+                else
+                    Client.showAlert(Alert.AlertType.INFORMATION, "注册成功", "现在你可以登陆了！");
 
-            //接收服务器响应
-            String info = receiveUtil.receiveUTF();
-            System.out.println(info);
+            //}).start();
 
+            userNameField.clear();
+            passwordField.clear();
 
         });
     }
