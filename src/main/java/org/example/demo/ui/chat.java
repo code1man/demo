@@ -1,6 +1,11 @@
 package org.example.demo.ui;
 
 import javafx.application.Application;
+<<<<<<< HEAD
+
+import javafx.application.Platform;
+=======
+>>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -8,9 +13,14 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+<<<<<<< HEAD
+import javafx.scene.layout.*;
+import javafx.stage.Modality;
+=======
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+>>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
 import javafx.stage.Stage;
 import org.example.demo.Client;
 import org.example.demo.ui.Chat_add.Sender;
@@ -42,6 +52,7 @@ public class chat extends Application {
     private CameraUtil cameraUtil;
     private VBox chatBox;
     private VBox nameBox;
+    private Sender sender_call;
 
 
     private String friendName;
@@ -50,14 +61,21 @@ public class chat extends Application {
         this.friendName = friendName;
         //可能要改成数据库中记录的用户名
     }
+<<<<<<< HEAD
+    public chat(){           //需要有一个无参的构造函数
 
+    }
+=======
+
+>>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
     public void initialize() {
         try {
+            sender_call = new Sender("localhost", 9999);
             // 初始化客户端并连接到服务器
             sender = new Sender("localhost", 10086); // 替换为服务器的IP和端口
             startListening();
-            System.out.println("成功");
-        } catch (IOException e) {System.out.println("成功个屁");
+            System.out.println("success initialize");
+        } catch (IOException e) {System.out.println("fail initialize");
 
             chatArea.appendText("Failed to connect to server: " + e.getMessage() + "\n");
             e.printStackTrace();
@@ -107,7 +125,7 @@ public class chat extends Application {
 
 
     // 从服务器接收消息并显示在 chatArea 中
-   public void startListening() {
+    public void startListening() {
         Thread thread = new Thread(() -> {
             try {
                 String message;
@@ -122,7 +140,72 @@ public class chat extends Application {
         thread.setDaemon(true);
         thread.start();
     }
+    private void showVoiceCallWindow() {
+        // 创建一个新的窗口
+        Stage newWindow = new Stage();
 
+        // 设置窗口标题
+        newWindow.setTitle("语音通话请求");
+
+        // 创建一个标签，显示信息
+        Label label = new Label("有语音通话请求...");
+
+        // 创建按钮用于接受或拒绝通话
+        Button acceptButton = new Button("接受");
+        Button rejectButton = new Button("拒绝");
+
+        // 为按钮添加事件处理程序（示例功能）
+        acceptButton.setOnAction(event -> {
+            // 处理接受通话
+            newWindow.close();
+            initiateVoiceCall();
+        });
+
+        rejectButton.setOnAction(event -> {
+            // 处理拒绝通话
+            newWindow.close();
+            terminateVoiceCall();
+            //拒绝通话
+        });
+
+        // 将UI元素排列在一个布局中
+        VBox layout = new VBox(10);  // 元素之间的间距
+        layout.getChildren().addAll(label, acceptButton, rejectButton);
+        layout.setAlignment(Pos.CENTER);
+
+        // 设置场景并显示窗口
+        Scene scene = new Scene(layout, 300, 200);
+        newWindow.setScene(scene);
+
+        // 设置为模态窗口（在关闭之前阻止与其他窗口的交互）
+        newWindow.initModality(Modality.APPLICATION_MODAL);
+
+        // 显示新窗口
+        newWindow.show();
+    }
+    public void startListening_call() {
+
+        Thread thread = new Thread(() -> {
+            try {
+                String message;
+                while ((message = sender_call.receiveMessage()) != null) {
+                    System.out.println(message);
+                    String finalMessage = message;
+                    if(finalMessage.equals("1"))         //有语音通话的请求的信息
+                    {
+                        if (!VoiceCallClient.isCalling) {
+                            System.out.println("准备加载确认界面");
+                            Platform.runLater(this::showVoiceCallWindow);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                chatArea.appendText("无法语音通话");
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+    }
     public void call(ActionEvent actionEvent) {
         //实际上要用这个 VoiceCallClient.socket
         //先连接
@@ -346,8 +429,18 @@ public class chat extends Application {
             }
         });
 
+<<<<<<< HEAD
+        voiceCall.setOnAction(
+                actionEvent -> {
+                    sender_call.sendMessage("1");       //传递一串特殊字符用于表示点击事件
+                    call(actionEvent);
+                }
+        );
+
+=======
         voiceCall.setOnAction(this::call);
         videoCall.setOnAction(this::call);
+>>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
 
         // 底部的消息输入和发送按钮布局
         HBox messageBox = new HBox(10); // 10 为输入框和按钮之间的间距
