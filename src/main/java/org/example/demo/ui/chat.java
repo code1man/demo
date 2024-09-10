@@ -19,9 +19,7 @@ import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
 import javax.swing.text.Utilities;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -65,20 +63,47 @@ public class chat extends Application {
     public void sendMessage() {
         String message = messageInput.getText();
         if (!message.isEmpty()) {
-            String formattedMessage = username + ": " + message;  // 在消息前附加用户名
+            // 格式化消息：用户名、消息内容、时间戳
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            String formattedMessage = Client.name + "   " + message + "    " + timestamp + "    ";
+
+            String request = "SENDMESSAGE "+Client.uid+" "+ friendName+" "+message  ;
+            //------------------------------------------------------------
+            try {
+                Client.client = new Socket("127.0.0.1",7777);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+            //--------------------------------------------------------------------
+            sendUtil.sendUTF(request);
+
+
+            // 将格式化消息发送到服务器
             sender.sendMessage(formattedMessage);
+
+            // 显示发送的消息到聊天区域
+            chatArea.appendText(formattedMessage + "\n");
+
+            // 保存消息到本地txt文件
+            chat.saveMessageToFile(friendName, formattedMessage);
+
+            // 清空输入框
             messageInput.clear();
         }
     }
 
+
     // 从服务器接收消息并显示在 chatArea 中
-   public void startListening() {
+   public   void startListening() {
         Thread thread = new Thread(() -> {
             try {
                 String message;
                 while ((message = sender.receiveMessage()) != null) {
                     String finalMessage = message;
-                    chatArea.appendText(finalMessage + "\n"); // 显示收到的消息
+                    //chatArea.appendText(finalMessage + "\n"); // 显示收到的消息
                 }
             } catch (IOException e) {
                 chatArea.appendText("Connection lost.\n");
@@ -206,55 +231,56 @@ public class chat extends Application {
         // 消息发送事件，点击发送后将信息显示在对话框中
         sendButton.setOnAction(e -> {
             sendMessage();
-            String message = messageInput.getText();
-            if (!message.isEmpty()) {
-                //存入数据库和txt文件中
+//            String message = messageInput.getText();
+//            if (!message.isEmpty()) {
+//                //存入数据库和txt文件中
+//
+//                try {
+//                    String sender = Client.uid;
+//                    //转成id
+//                    String sql =  "SELECT userid FROM t_users WHERE username = ?";
+//                    ArrayList<Object> arrayList = new ArrayList<>();
+//                    arrayList.add(primaryStage.getTitle());
+//
+//                    ResultSet resultSet = DbUtil.executeQuery(sql,arrayList);
+//                    String request = "";
+//
+//
+//
+//                    if(resultSet.next()) {
+//                        String receiver = resultSet.getString("userid");
+//                        //还没弄入文件
+//                        String messageText = message;
+//                      request = "INFORMATION"+" "+sender+" "+receiver+" "+messageText;
+//                    }
+//
+//                    try {
+//                        Client.client = new Socket("127.0.0.1",7777);
+//                    } catch (IOException ex) {
+//                        throw new RuntimeException(ex);
+//                    }
+//
+//                    TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+//                    TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+//                    sendUtil.sendUTF(request);
+//
+//                    // 获取当前时间戳
+//                    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//
+//                    System.out.println("发送了信息");
+//                    // 追加信息到 txt 文件
+//                    String chatLine = Client.name + "   " + message + "    " + timestamp + "    ";
+//                    saveMessageToFile(primaryStage.getTitle(), chatLine);
+//
+//
+//                } catch (SQLException ex) {
+//                    throw new RuntimeException(ex);
+//                }
+//
+//                chatArea.appendText(Client.name+"   "+message + "   "+Timestamp.valueOf(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))) + "\n");
+//                messageInput.clear(); // 清空输入框
 
-                try {
-                    String sender = Client.uid;
-                    //转成id
-                    String sql =  "SELECT userid FROM t_users WHERE username = ?";
-                    ArrayList<Object> arrayList = new ArrayList<>();
-                    arrayList.add(primaryStage.getTitle());
-
-                    ResultSet resultSet = DbUtil.executeQuery(sql,arrayList);
-                    String request = "";
-
-
-
-                    if(resultSet.next()) {
-                        String receiver = resultSet.getString("userid");
-                        //还没弄入文件
-                        String messageText = message;
-                      request = "INFORMATION"+" "+sender+" "+receiver+" "+messageText;
-                    }
-
-                    try {
-                        Client.client = new Socket("127.0.0.1",7777);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-
-                    TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
-                    TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
-                    sendUtil.sendUTF(request);
-
-                    // 获取当前时间戳
-                    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-                    // 追加信息到 txt 文件
-                    String chatLine = Client.name + "   " + message + "    " + timestamp + "    ";
-                    saveMessageToFile(primaryStage.getTitle(), chatLine);
-
-
-                } catch (SQLException ex) {
-                    throw new RuntimeException(ex);
-                }
-
-                chatArea.appendText(Client.name+"   "+message + "   "+Timestamp.valueOf(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))) + "\n");
-                messageInput.clear(); // 清空输入框
-
-            }
+          //  }
         });
 
         voiceCall.setOnAction(this::call);
@@ -285,9 +311,71 @@ public class chat extends Application {
 
 
     //写进txt
-    public void saveMessageToFile(String friendname, String message) {
+    public static void saveMessageToFile(String friendname, String message,String timestamp) {
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(  DbUtil.getID(friendname) + "_chat.txt", true))) {
+        //先连接----------------------------------------------------------------
+        try {
+            Client.client = new Socket("127.0.0.1",7777);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+        //---------------------------------------------------------------------
+
+        String request = "GETID "+friendname;
+        sendUtil.sendUTF(request);
+        int id  = Integer.parseInt(receiveUtil.receiveUTF());
+
+        // 读取最后一条消息的时间戳
+        File chatFile = new File(id + "_chat.txt");
+        String lastTimestamp = "";
+        if (chatFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(chatFile))) {
+                String lastLine = "";
+                while ((lastLine = reader.readLine()) != null) {
+                    String[] result = lastLine.split(" ");
+                    System.out.println(lastLine);
+                    // 找到最后一行，假设最后一行记录了时间戳
+                    lastTimestamp = result[0]+" "+result[1];  // 假设时间戳在第一位
+                    System.out.println(lastTimestamp);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 检查当前消息时间戳是否晚于最后一条消息的时间戳
+        if (timestamp.compareTo(lastTimestamp)>0) {
+            System.out.println("该离线消息已进入txt");
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(id + "_chat.txt", true))) {
+                writer.write(message);
+                writer.newLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void saveMessageToFile(String friendname, String message) {
+
+        //先连接----------------------------------------------------------------
+        try {
+            Client.client = new Socket("127.0.0.1",7777);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+        //---------------------------------------------------------------------
+
+        String request = "GETID "+friendname;
+        sendUtil.sendUTF(request);
+        int id  = Integer.parseInt(receiveUtil.receiveUTF());
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(  id+ "_chat.txt", true))) {
             writer.write(message);
             writer.newLine();
         } catch (IOException e) {
@@ -295,6 +383,41 @@ public class chat extends Application {
         }
     }
 
+    public static String getTXTLastTime(String friendname){
+
+        //先连接----------------------------------------------------------------
+        try {
+            Client.client = new Socket("127.0.0.1",7777);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+        //---------------------------------------------------------------------
+
+        String request = "GETID "+friendname;
+        sendUtil.sendUTF(request);
+        int id  = Integer.parseInt(receiveUtil.receiveUTF());
+
+        File chatFile = new File(id + "_chat.txt");
+        String lastTimestamp = "";
+        if (chatFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(chatFile))) {
+                String lastLine = "";
+                while ((lastLine = reader.readLine()) != null) {
+                    String[] result = lastLine.split(" ");
+                    //System.out.println(lastLine);
+                    // 找到最后一行，假设最后一行记录了时间戳
+                    lastTimestamp = result[0]+" "+result[1];  // 假设时间戳在第一位
+                    //System.out.println(lastTimestamp);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return  lastTimestamp;
+    }
 
 
     public static void main(String[] args) {

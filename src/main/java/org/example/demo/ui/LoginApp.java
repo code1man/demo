@@ -188,9 +188,13 @@ public class LoginApp extends Application {
                 Client.avatarUrl = load[1];
                 //Client.controlTimes =load[2];
                 //Client.goodRatingPercentage = load[3];
-                String[] load1 = load[4].split("#");
-                for (int i = 0 ; i< load1.length;i++){
-                    Client.friendNames.add(load1[i]);
+
+                //有好友才载入好友
+                if(load.length>=5) {
+                    String[] load1 = load[4].split("#");
+                    for (int i = 0; i < load1.length; i++) {
+                        Client.friendNames.add(load1[i]);
+                    }
                 }
 
                 System.out.println("个人数据载入到本地");

@@ -35,6 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javafx.scene.text.Text;
@@ -302,18 +303,18 @@ public class Home extends Application {
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             recommendationList.getItems().clear(); // 清空之前的推荐列表
 
-//            if (newValue.isEmpty()) {
-//                // 如果搜索框为空，显示前三个好评率最高的非好友
-//                String request = "TOPFRIENDS " + Client.uid;
-//                sendUtil.sendUTF(request);
-//                String back = receiveUtil.receiveUTF();
-//                String[] result = back.split(" ");
-//
-//                for (String user : result) {
-//                    HBox itemBox = createRecommendationItem(user);
-//                    recommendationList.getItems().add(itemBox);
-//                }
-//            } else {
+            if (newValue.isEmpty()) {
+                // 如果搜索框为空，显示前三个好评率最高的非好友
+                String request = "TOPFRIENDS " + Client.uid;
+                sendUtil.sendUTF(request);
+                String back = receiveUtil.receiveUTF();
+                String[] result = back.split(" ");
+
+                for (String user : result) {
+                    HBox itemBox = createRecommendationItem(user);
+                    recommendationList.getItems().add(itemBox);
+                }
+            } else {
             if(!newValue.isEmpty()){
                //  搜索框中有内容时，调用searchFriends显示匹配的非好友
                 String request = "SEARCHFRIENDS " + newValue + " " + Client.uid;
@@ -334,7 +335,7 @@ public class Home extends Application {
                             recommendationList.getItems().add(itemBox);
                         }
                     }
-
+                }
                 }
             }
         });
@@ -387,8 +388,18 @@ public class Home extends Application {
 
         TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
         TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
-        //---------------------------------------------------------------------------[
+        //---------------------------------------------------------------------------
+// 请求好友操作次数和好评率等信息
+        String request = "GETUSERINFO " + userName;
+        sendUtil.sendUTF(request);
+        String userInfo = receiveUtil.receiveUTF();
+        // 假设返回格式为 "操作次数 好评率 状态"
+        String[] info = userInfo.split(" ");
+        String operationCount = info[1];
+        String goodRatingPercentage = info[2];
+        String status = info[0];
 
+        // 创建好友条的 HBox
         HBox itemBox = new HBox(10);
         itemBox.setAlignment(Pos.CENTER_LEFT);
         itemBox.setPadding(new Insets(10));
@@ -397,9 +408,23 @@ public class Home extends Application {
                 "-fx-border-radius: 5px; " +
                 "-fx-background-radius: 5px;");
 
+        // 用户名标签
         Label userLabel = new Label(userName);
         userLabel.setStyle("-fx-font-family: '微软雅黑'; -fx-font-size: 14px;");
 
+        // 操作次数标签
+        Label operationLabel = new Label("操作次数: " + operationCount);
+        operationLabel.setStyle("-fx-font-family: '微软雅黑'; -fx-font-size: 12px; -fx-text-fill: lightblue;");
+
+        // 好评率标签
+        Label ratingLabel = new Label("好评率: " + goodRatingPercentage + "%");
+        ratingLabel.setStyle("-fx-font-family: '微软雅黑'; -fx-font-size: 12px; -fx-text-fill: lightblue;");
+
+        // 状态标签
+        Label statusLabel = new Label("状态: " + status);
+        statusLabel.setStyle("-fx-font-family: '微软雅黑'; -fx-font-size: 12px; -fx-text-fill: lightblue;");
+
+        // 加好友按钮
         Button addButton = new Button("加好友");
         addButton.setStyle("-fx-background-color: lightblue; " +
                 "-fx-border-radius: 5px; " +
@@ -407,19 +432,17 @@ public class Home extends Application {
 
         addButton.setOnAction(e -> {
             System.out.println("添加好友: " + userName);
-            String friendName = "";     //这里后面要改，从检索出来的标签取
-
-            String request = "ADDFRIENDS"+" "+"pending"+" "+Client.uid+" "+userName;
-
-            sendUtil.sendUTF(request);
-
+            String requestAdd = "ADDFRIENDS" + " " + "pending" + " " + Client.uid + " " + userName;
+            sendUtil.sendUTF(requestAdd);
             System.out.println(receiveUtil.receiveUTF());
         });
 
+        // 添加一个空白区域，用于布局的扩展和对齐
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        itemBox.getChildren().addAll(userLabel, spacer, addButton);
+        // 将标签添加到好友条，顺序是：用户名 -> 操作次数 -> 好评率 -> 状态 -> 空白区域 -> 加好友按钮
+        itemBox.getChildren().addAll(userLabel, operationLabel, ratingLabel, statusLabel, spacer, addButton);
         return itemBox;
     }
 
@@ -603,12 +626,30 @@ public class Home extends Application {
                         friendLabel.setStyle("-fx-font-family: 'Arial'; -fx-font-size: 14px;");
                         friendLabel.setPadding(new Insets(10));
 
-                        // 创建申请联机按钮
-                        Button applyConnectBtn = new Button("申请通话");
-                        applyConnectBtn.setStyle("-fx-font-family: '微软雅黑'; -fx-font-size: 12px; " +
-                                "-fx-background-color: lightblue; -fx-background-radius: 10; " +
-                                "-fx-border-radius: 10; -fx-border-color: lightblue; -fx-border-width: 1px;");
-                        applyConnectBtn.setPadding(new Insets(5));
+                        // 获取好友的操作次数、好评率、状态等数据
+                        String friendName = Client.selectFriendName.get(i);
+                        String request = "GETUSERINFO " + friendName;
+
+                        sendUtil.sendUTF(request);
+                        String userInfo = receiveUtil.receiveUTF();
+
+                        // 假设返回的数据格式为 "操作次数 好评率 状态"
+                        String[] info = userInfo.split(" ");
+                        String operationCount = info[1];
+                        String goodRatingPercentage = info[2];
+                        String status = info[0];
+
+                        // 创建操作次数标签
+                        Label operationLabel = new Label("操作次数: " + operationCount);
+                        operationLabel.setStyle("-fx-font-family: 'Arial'; -fx-font-size: 12px; -fx-text-fill: lightblue;");
+
+                        // 创建好评率标签
+                        Label ratingLabel = new Label("好评率: " + goodRatingPercentage + "%");
+                        ratingLabel.setStyle("-fx-font-family: 'Arial'; -fx-font-size: 12px; -fx-text-fill: lightblue;");
+
+                        // 创建状态标签
+                        Label statusLabel = new Label("状态: " + status);
+                        statusLabel.setStyle("-fx-font-family: 'Arial'; -fx-font-size: 12px; -fx-text-fill: lightblue;");
 
                         // 创建发消息按钮
                         Button sendMessageBtn = new Button("发消息");
@@ -617,14 +658,8 @@ public class Home extends Application {
                                 "-fx-border-radius: 10; -fx-border-color: lightblue; -fx-border-width: 1px;");
                         sendMessageBtn.setPadding(new Insets(5));
 
-                        // 设置申请联机按钮点击事件
+                        // 设置发消息按钮点击事件
                         Label finalFriendLabel = friendLabel;
-                        applyConnectBtn.setOnAction(e -> {
-                            System.out.println("申请联机: " + finalFriendLabel.getText());
-                            openChatWindow(finalFriendLabel.getText());
-                        });
-
-                    // 设置发消息按钮点击事件
                         sendMessageBtn.setOnAction(e -> {
                             System.out.println("发送消息: " + finalFriendLabel.getText());
                             openChatWindow(finalFriendLabel.getText());
@@ -634,7 +669,7 @@ public class Home extends Application {
                         Region spacer = new Region();
                         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-                        // 将用户名、spacer 和两个按钮放到 HBox 中
+                        // 将用户名、操作次数、好评率、状态、spacer 和发消息按钮放到 HBox 中
                         HBox friendBox = new HBox(20);  // 设置用户名和按钮之间的间距
                         friendBox.setAlignment(Pos.CENTER_LEFT);
                         friendBox.setPadding(new Insets(10));
@@ -643,8 +678,12 @@ public class Home extends Application {
                                 "-fx-border-color: lightgray; -fx-border-width: 2px; " +
                                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.5, 2, 2);");
 
-                        // 将两个按钮放在一起，发消息在左侧，申请联机在右侧
-                        friendBox.getChildren().addAll(friendLabel, spacer, sendMessageBtn, applyConnectBtn);
+                        // 调整布局：将用户名、操作次数、好评率、状态标签与发消息按钮放在一行
+                        VBox infoBox = new VBox(5);  // 垂直布局：操作次数、好评率、状态
+                        infoBox.getChildren().addAll(operationLabel, ratingLabel, statusLabel);
+
+                        // 将用户名、信息标签、spacer 和发消息按钮放入 friendBox
+                        friendBox.getChildren().addAll(friendLabel, infoBox, spacer, sendMessageBtn);
 
                         // 将每个好友条块添加到 VBox 中
                         friendsListBox.getChildren().add(friendBox);
@@ -687,11 +726,11 @@ public class Home extends Application {
 
                 // 创建控件
                 Label usernameLabel = new Label("用户名: " + Client.name);
-                Label signatureLabel = new Label("个性签名: " + Client.signature);
+                Label signatureLabel = new Label("远程控制: " + Client.signature);
                 Label genderLabel = new Label("性别: " + Client.sex);
                 Label birthdayLabel = new Label("生日: " + Client.birthday);
-                Label countryLabel = new Label("国家: " + Client.birthday);
-                Label provinceLabel = new Label("省份: " + Client.province);
+                Label countryLabel = new Label("远程控制次数: " + Client.controlTimes);
+                Label provinceLabel = new Label("好评率: " + Client.goodRatingPercentage);
 
                 Image profileImage = new Image(Client.avatarUrl);
                 ImageView profileImageView = new ImageView(profileImage);
@@ -929,10 +968,93 @@ public class Home extends Application {
 
                     chatWindow.start(chatStage); // 启动新的 Chat 窗口
                     // 初始化聊天区域
+
+                    //先连接----------------------------------------------------------------
+                    try {
+                        Client.client = new Socket("127.0.0.1",7777);
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+
+                    TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+                    TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+                    //---------------------------------------------------------------------
+
+                    String request = "GETMESSAGE "+Client.uid+" "+friendname;
+                    sendUtil.sendUTF(request);
+                    String result = receiveUtil.receiveUTF();
+                    String []results = result.split("#");
                     TextArea chatArea = chatWindow.getChatArea();
-                    chatArea.appendText(loadChatHistory(DbUtil.getID(friendname))); // 加载历史记录
+
+                    //最新的离线消息时间
+                    String time1 = results[0];
+                    System.out.println("time1"+time1);
+//                    // 用来存储结果的 List
+//                    List<String> resultList = new ArrayList<>();
+//
+//// 用于积累字符构成的单词
+//                    StringBuilder currentElement = new StringBuilder();
+//
+//                    for (char c : result.toCharArray()) {
+//                        if (c == ' ') {
+//                            // 如果是空格，先将之前积累的单词加入结果列表
+//                            if (currentElement.length() > 0) {
+//                                resultList.add(currentElement.toString());
+//                                currentElement.setLength(0); // 清空 StringBuilder
+//                            }
+//                            // 将空格作为单独的元素加入
+//                            resultList.add(" ");
+//                        } else {
+//                            // 否则继续积累字符到当前元素
+//                            currentElement.append(c);
+//                        }
+//                    }
+//
+//// 处理最后一个单词（如果有）
+//                    if (currentElement.length() > 0) {
+//                        resultList.add(currentElement.toString());
+//                    }
+//
+//// 将结果转换为数组
+//                    String[] resultArray = resultList.toArray(new String[0]);
+
+                    //有离线好友才行
+                if (results.length>=3) {
+                    // 以步长3遍历数组
+                    for (int i = 1; i <= results.length - 3; i +=3) {
+                        // 假设每条消息格式为 "时间 发送者 内容"
+                        String sender= results[i];
+                        String content= results[i + 1];
+                        String  time= results[i + 2];
 
 
+
+                        String formattedMessage = "";
+                        formattedMessage =  time + " " + sender + ": " + content ;
+
+//                        // 显示在聊天区域
+//                        chatArea.appendText(formattedMessage+"\n");
+
+                        // 追加到 StringBuilder 中
+                        //offlineMessages.append(formattedMessage);
+
+                        //这里也要大于原本里面的才能插
+                        String  txtLastTime= chat.getTXTLastTime(friendname);
+                        System.out.println("txtlasttime"+txtLastTime);
+                        if (time.compareTo(txtLastTime) > 0) {
+                            chat.saveMessageToFile(friendname, formattedMessage, time);
+                        } else {
+                            System.out.println("跳过重复消息: " + formattedMessage);
+                        }
+                    }
+                }
+                else
+                    System.out.println("不存在离线信息");
+
+
+
+
+                    chatArea.appendText(loadChatHistory(friendname)); // 加载历史记录
 
                     // 保存聊天窗口到缓存
                     Client.chatWindows.put(friendname, chatStage);
@@ -969,7 +1091,23 @@ public class Home extends Application {
     }
 
     // 加载聊天历史的方法，从 txt 文件中读取并返回
-    private String loadChatHistory(int id) {
+    private String loadChatHistory(String friendName) {
+
+        //先连接----------------------------------------------------------------
+        try {
+            Client.client = new Socket("127.0.0.1",7777);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        TCPSendUtil sendUtil = new TCPSendUtil(Client.client );
+        TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+        //---------------------------------------------------------------------
+
+        String request = "GETID "+friendName;
+        sendUtil.sendUTF(request);
+        int id  = Integer.parseInt(receiveUtil.receiveUTF());
+
         StringBuilder chatHistory = new StringBuilder();
         File chatFile = new File( id + "_chat.txt");
 

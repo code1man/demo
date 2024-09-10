@@ -145,6 +145,42 @@ public class DbUtil {
         return status;
     }
 
+    public static  int  getControlTimes(int userid){
+        int flag = 0;
+        String sql = "SELECT controlTimes FROM t_users WHERE userID = ?";
+        ArrayList<Object> arrayList = new ArrayList<>();
+        arrayList.add(userid);
+
+        ResultSet resultSet1 = DbUtil.executeQuery(sql,arrayList);
+        try {
+            while(resultSet1.next())
+            {
+                flag = resultSet1.getInt("controlTimes");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return flag;
+    }
+
+    public static double getGoodRatingPercentage(int userid){
+        double flag = 0.0;
+        String sql = "SELECT goodRatingPercentage FROM t_users WHERE userID = ?";
+        ArrayList<Object> arrayList = new ArrayList<>();
+        arrayList.add(userid);
+
+        ResultSet resultSet1 = DbUtil.executeQuery(sql,arrayList);
+        try {
+            while(resultSet1.next())
+            {
+                flag = resultSet1.getDouble("goodRatingPercentage");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return flag;
+    }
+
     public static void close() {
         if (con != null) {
             try {
