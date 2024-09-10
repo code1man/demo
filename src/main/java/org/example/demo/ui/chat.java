@@ -1,11 +1,8 @@
 package org.example.demo.ui;
 
 import javafx.application.Application;
-<<<<<<< HEAD
 
 import javafx.application.Platform;
-=======
->>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -13,14 +10,11 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-<<<<<<< HEAD
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
-=======
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
->>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
 import javafx.stage.Stage;
 import org.example.demo.Client;
 import org.example.demo.ui.Chat_add.Sender;
@@ -61,13 +55,9 @@ public class chat extends Application {
         this.friendName = friendName;
         //可能要改成数据库中记录的用户名
     }
-<<<<<<< HEAD
     public chat(){           //需要有一个无参的构造函数
 
     }
-=======
-
->>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
     public void initialize() {
         try {
             sender_call = new Sender("localhost", 9999);
@@ -429,7 +419,6 @@ public class chat extends Application {
             }
         });
 
-<<<<<<< HEAD
         voiceCall.setOnAction(
                 actionEvent -> {
                     sender_call.sendMessage("1");       //传递一串特殊字符用于表示点击事件
@@ -437,10 +426,8 @@ public class chat extends Application {
                 }
         );
 
-=======
         voiceCall.setOnAction(this::call);
         videoCall.setOnAction(this::call);
->>>>>>> bd83122498d992e06453f80be927ddaf23ae07b9
 
         // 底部的消息输入和发送按钮布局
         HBox messageBox = new HBox(10); // 10 为输入框和按钮之间的间距
