@@ -21,7 +21,7 @@ public class CameraUtil {
     private final Thread SendVideoThread;
 
     private final String SERVER_ADDRESS = "localhost";
-    private final int SERVER_PORT = 8888;
+    private final int SERVER_PORT = 8848;
 
     public CameraUtil() {
         // get default webcam and open it获取网络摄像头设置并打开

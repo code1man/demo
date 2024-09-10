@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
 
 public class Home extends Application {
@@ -41,9 +42,11 @@ public class Home extends Application {
     private AnchorPane rightPane; // 使用 AnchorPane 来控制右侧内容块的位置
     private VBox rightContentBox; // 右侧内容块
     private TextField searchField; // 搜索框
+    private ListView<HBox> targetListView;
 
     private TCPSendUtil sendUtil = new TCPSendUtil(Client.client);
     private TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.client) ;
+    private ArrayList<String> selectedFriends = new ArrayList<>();
 
     public static ImageView userAvatar;
     public static yuanchengkongzhi controlWindow; //远程控制方便更改ImageView
@@ -56,7 +59,10 @@ public class Home extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        // 初始化
+        new Client().init();
 
+        // 前置工作
         new Thread(()->{
             String request2 = "SHOWPENDINGFRIENDS " +Client.uid;
             sendUtil.sendUTF(request2);
@@ -99,6 +105,7 @@ public class Home extends Application {
         }
         ).start();
 
+        // 全程监听客户端输入
         Thread receiveApplyThread = new Thread(() -> {
             TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.secondClient);
             while (!Thread.currentThread().isInterrupted()) {
@@ -356,7 +363,6 @@ public class Home extends Application {
             }
         });
 
-
         // 确保搜索框保持焦点时，不会关闭推荐框
         searchField.setOnKeyPressed(e -> {
             if (!recommendationPopup.isShowing()) {
@@ -412,6 +418,42 @@ public class Home extends Application {
                         Client.friendNames.add(info[1]);
                     } else if (info[0].equals("REJECT")) {
                         System.out.println("你被" + info[1] + "拒绝了");
+                    } else if (info[0].equals("REMOTECONTROLSTART")) {
+                        // Create a new Dialog
+                        Dialog<ButtonType> dialog = new Dialog<>();
+                        dialog.setTitle("远程操控邀请");
+                        dialog.setHeaderText(null); // No header text
+
+                        // Create the content of the dialog
+                        Label messageLabel = new Label( info[1] + "邀请您进行远程操控");
+
+                        Button btnAccept = new Button("接受");
+                        btnAccept.setOnAction(event -> {
+                            System.out.println("Accepted");
+                            dialog.close(); // Close the dialog when accepted
+                            new yuanchengkongzhi01().start(Main.stage);
+                            sendUtil.sendUTF("ACCEPTREMOTECONTROL" + info[1]);
+                        });
+
+                        Button btnReject = new Button("拒绝");
+                        btnReject.setOnAction(event -> {
+                            System.out.println("Rejected");
+                            dialog.close(); // Close the dialog when rejected
+                            sendUtil.sendUTF("REJECTREMOTECONTROL " + info[1]);
+                        });
+
+                        VBox content = new VBox(10, messageLabel, btnAccept, btnReject);
+                        content.setStyle("-fx-padding: 10;");
+
+                        // Set the content of the DialogPane
+                        DialogPane dialogPane = dialog.getDialogPane();
+                        dialogPane.setContent(content);
+                        dialogPane.getButtonTypes().add(ButtonType.CANCEL); // Add default cancel button
+
+                        // Show the dialog and wait for user response
+                        dialog.showAndWait();
+                    } else if (info[0].equals("REMOTECONTROLEND")) {
+
                     }
                 }
             } catch (Exception e) {
@@ -829,6 +871,7 @@ public class Home extends Application {
                 Button rightButton = new Button();
                 rightButton.setGraphic(rightImage);
                 rightButton.setStyle("-fx-background-color: transparent;");
+
                 rightButton.setOnAction(e -> openControlWindow()); // 点击事件，弹出 yuanchengkongzhi 窗口
 
                 // 小标题2：远程控制
@@ -863,13 +906,11 @@ public class Home extends Application {
                 dropDownBox.getChildren().addAll(dropDownButton, promptLabel);
 
                 // 多选列表框
-                ListView<HBox> targetListView = new ListView<>();
+                targetListView = new ListView<>();
                 targetListView.setPrefWidth(200);
                 targetListView.setVisible(false); // 初始设置为隐藏
 
-
                 //12
-                //String[] targets = {"XX01", "XX02", "XX03", "XX04", "XX05"};
                 for (String target : Client.friendNames) {
                     CheckBox checkBox = new CheckBox(target);
                     hBox = new HBox(10);
@@ -969,21 +1010,43 @@ public class Home extends Application {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    // 获取被选中的好友名
+    private void getSelectedFriends() {
+        selectedFriends.clear();
+        for (HBox hBox : targetListView.getItems()) {
+            CheckBox checkBox = (CheckBox) hBox.getChildren().get(0);
+            if (checkBox.isSelected()) {
+                selectedFriends.add(checkBox.getText());
+            }
+        }
     }
 
     // 新窗口方法：用于显示设备控制的窗口
     private void openControlWindow() {
-        Platform.runLater(() -> {
-            try {
-                // 创建 yuanchengkongzhi 窗口的实例并启动
-                controlWindow = new yuanchengkongzhi();
-                Stage controlStage = new Stage();
-                controlWindow.start(controlStage); // 启动 yuanchengkongzhi 窗口
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
+
+        getSelectedFriends();
+
+        if (selectedFriends.size() > 0) {
+            Platform.runLater(() -> {
+                try {
+                    // 创建 yuanchengkongzhi 窗口的实例并启动
+                    controlWindow = new yuanchengkongzhi();
+                    Stage controlStage = new Stage();
+                    sendUtil.sendUTF("REMOTECONTROLSTART " + selectedFriends.get(0));
+
+                    new Thread(() -> {
+                        String recieve = new TCPReceiveUtil(Client.RemoteControlClient).receiveUTF();
+                        String[] result = recieve.split("#");
+                        if (result[0].equals("ACCEPTREMOTECONTROL"))
+                            controlWindow.start(controlStage); // 启动 yuanchengkongzhi 窗口
+                    }).start();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+        }
     }
 
     // 加载聊天历史的方法，从 txt 文件中读取并返回

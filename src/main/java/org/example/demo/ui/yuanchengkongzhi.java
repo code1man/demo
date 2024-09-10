@@ -35,13 +35,14 @@ public class yuanchengkongzhi extends Application {
     private TCPSendUtil tcpSendUtil;
 
     //private RemoteControlUtil remoteControlUtil = new RemoteControlUtil();
+    public yuanchengkongzhi() {
+        remoteControlUtil = new RemoteControlUtil();
+        tcpSendUtil = new TCPSendUtil(Client.RemoteControlClient);
+    }
 
     @Override
     public void start(Stage primaryStage) {
-        remoteControlUtil = new RemoteControlUtil();
-        tcpSendUtil = new TCPSendUtil(Client.RemoteControlClient);
-
-        primaryStage.getIcons().add(new Image("logo.jpg"));
+        primaryStage.getIcons().add(new Image("/logo.jpg"));
 
         // 设置全屏
         primaryStage.setFullScreen(true);
@@ -101,8 +102,8 @@ public class yuanchengkongzhi extends Application {
         });
 
         // 加载两个图标图片
-        Image icon1 = new Image("maike01.png"); // 替换为你的第一个图片路径
-        Image icon2 = new Image("maike02.jpg"); // 替换为你的第二个图片路径
+        Image icon1 = new Image("/maike01.png"); // 替换为你的第一个图片路径
+        Image icon2 = new Image("/maike02.jpg"); // 替换为你的第二个图片路径
 
         // 创建图片按钮，初始图标为 icon1
         ImageView iconImageView = new ImageView(icon1);

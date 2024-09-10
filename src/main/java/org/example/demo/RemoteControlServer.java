@@ -1,6 +1,7 @@
 package org.example.demo;
 
 import org.example.demo.utils.CloseUtil;
+import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
@@ -66,6 +67,25 @@ public class RemoteControlServer {
         }
 
         public void run() {
+            new Thread(() -> {
+                for (int i = 0; i < 2; i++) {
+                    String order = receive.receiveUTF();
+                    if (order != null) {
+                        System.out.println("接收到的命令" + order);
+                        String[] request = order.split(" ");
+                        if (request[0].equals(("REMOTECONTROLSTART"))) {
+                            selectClient(DbUtil.getID(request[1])).send2.sendUTF("REMOTECONTROLSTART#" + DbUtil.getUserName(uid));
+                        }
+
+                        if (request[0].equals(("REJECTREMOTECONTROL"))) {
+                            selectClient(DbUtil.getID(request[1])).send2.sendUTF("REMOTECONTROLEND#" + DbUtil.getUserName(uid));
+                        }
+                        if (request[0].equals("ACCEPTREMOTECONTROL")) {
+                            selectClient(DbUtil.getID(request[1])).send2.sendUTF("ACCEPTREMOTECONTROL#" + DbUtil.getUserName(uid));
+                        }
+                    }
+                }
+            }).start();
             // 远程投屏
             new Thread(() -> {
                 while (isRunning) {
@@ -103,6 +123,16 @@ public class RemoteControlServer {
             for (Client c : all) {
                 if (c.uid == targetUid)
                     return c.client;
+            }
+            return null;
+        }
+
+        private Client selectClient(int userID) {
+            System.out.println(all);
+            for (Client c: all) {
+                if (userID == c.uid) {
+                    return c;
+                }
             }
             return null;
         }

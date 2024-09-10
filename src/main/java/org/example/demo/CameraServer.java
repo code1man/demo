@@ -17,7 +17,7 @@ public class CameraServer {
         System.out.println("-----CameraServer-----");
 
         try (
-             ServerSocket server = new ServerSocket(8888)) {
+             ServerSocket server = new ServerSocket(8848)) {
             while (true) {
                 Socket client = server.accept();
                 Client c = new Client(client);
