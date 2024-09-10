@@ -119,7 +119,8 @@ public class chat extends Application {
             try {
                 String message;
                 while ((message = sender.receiveMessage()) != null) {
-                    String finalMessage = username+":"+message;
+                   // String finalMessage = username+":"+message;
+                    String finalMessage = message;
                     //chatArea.appendText(finalMessage + "\n"); // 显示收到的消息
                      Platform.runLater(()->{
                         HBox bubbleBox = createBubble(finalMessage, true);
