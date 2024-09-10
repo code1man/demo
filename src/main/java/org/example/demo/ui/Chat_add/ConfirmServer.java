@@ -47,6 +47,7 @@ public class ConfirmServer {
             try {
                 String message;
                 while ((message = in.readLine()) != null) {
+                    System.out.println("接收到信息：" + message);
                     broadcastMessage(message, out); // Broadcast message to all clients
                 }
 

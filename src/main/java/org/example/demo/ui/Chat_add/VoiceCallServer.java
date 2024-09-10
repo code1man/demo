@@ -1,8 +1,8 @@
 package org.example.demo.ui.Chat_add;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import org.example.demo.utils.DbUtil;
+
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -30,9 +30,21 @@ public class VoiceCallServer {
         private Socket socket;
         private InputStream in;
         private OutputStream out;
+        private int uid;
+        private int fuid;
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
+            try {
+                String msg = new BufferedReader(new InputStreamReader(socket.getInputStream())).readLine();
+                String[] info = msg.split("#");
+                this.uid = Integer.parseInt(info[0]);
+                this.fuid = DbUtil.getID(info[1]);
+
+                System.out.println(uid + ":" + fuid);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         @Override
@@ -61,7 +73,7 @@ public class VoiceCallServer {
         private void broadcast(byte[] data, int length) {
             synchronized (clientHandlers) {
                 for (ClientHandler handler : clientHandlers) {
-                    if (handler != this) {
+                    if (handler.uid == fuid) {
                         try {
                             handler.out.write(data, 0, length);
                         } catch (IOException e) {

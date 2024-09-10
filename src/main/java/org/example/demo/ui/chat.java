@@ -59,9 +59,11 @@ public class chat extends Application {
     public chat(){}
     public void initialize() {
         try {
-            sender_call = new Sender("localhost", 9999);
+            int id = DbUtil.getID(username);
+
+            sender_call = new Sender("localhost", 9999,id, friendName);
             // 初始化客户端并连接到服务器
-            sender = new Sender("localhost", 10086); // 替换为服务器的IP和端口
+            sender = new Sender("localhost", 10086,id, friendName); // 替换为服务器的IP和端口
             startListening();
             startListening_call();
             System.out.println("success initialize");
@@ -101,9 +103,9 @@ public class chat extends Application {
         if (!message.trim().isEmpty()) {
             // 创建气泡背景
             sender.sendMessage(message.trim());
-//            HBox bubbleBox = createBubble(message, true);
-//            bubbleBox.getChildren().add(nameBox);// 传入 true 表示发送消息
-//            chatBox.getChildren().add(bubbleBox);
+            HBox bubbleBox = createBubble(message, true);
+            bubbleBox.getChildren().add(nameBox);// 传入 true 表示发送消息
+            chatBox.getChildren().add(bubbleBox);
 
             // 滚动到最新消息
 //            ScrollPane scrollPane = (ScrollPane) chatBox.getParent().getParent();
@@ -121,6 +123,7 @@ public class chat extends Application {
                 while ((message = sender.receiveMessage()) != null) {
                    // String finalMessage = username+":"+message;
                     String finalMessage = message;
+                    System.out.println(message);
                     //chatArea.appendText(finalMessage + "\n"); // 显示收到的消息
                      Platform.runLater(()->{
                         HBox bubbleBox = createBubble(finalMessage, true);
@@ -135,6 +138,7 @@ public class chat extends Application {
         thread.setDaemon(true);
         thread.start();
     }
+
     private void showVoiceCallWindow() {
         // 创建一个新的窗口
         Stage newWindow = new Stage();
@@ -203,7 +207,7 @@ public class chat extends Application {
 
             sendUtil.sendUTF(request);
 
-            sessionID =  Integer.parseInt(receiveUtil.receiveUTF()) ;
+           // sessionID =  Integer.parseInt(receiveUtil.receiveUTF()) ;
 
             voiceCall.setText("挂断通话");
         } else {
@@ -211,7 +215,7 @@ public class chat extends Application {
 
             String request = "FinishVoiceChat";
             sendUtil.sendUTF(request);
-            System.out.println(receiveUtil.receiveUTF());
+            //System.out.println(receiveUtil.receiveUTF());
 
             voiceCall.setText("发起语音通话");
         }
@@ -274,7 +278,7 @@ public class chat extends Application {
         try {
             new Thread(() -> {
                 try {
-                    VoiceCallClient.main(null); // 启动音频捕获和接收线程
+                    VoiceCallClient.main(new String[]{Client.uid, friendName}); // 启动音频捕获和接收线程
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -310,7 +314,7 @@ public class chat extends Application {
                     System.out.println(message);
                     String finalMessage = message;
                     System.out.println("准备接收语音通话");
-                    if(finalMessage.equals("1"))         //有语音通话的请求的信息
+                    if(finalMessage.equals("2"))         //有语音通话的请求的信息
                     {
                         System.out.println("接收到语音通话请求");
                         if (!VoiceCallClient.isCalling) {
@@ -437,7 +441,7 @@ public class chat extends Application {
 
         voiceCall.setOnAction(
                 actionEvent -> {
-                    sender_call.sendMessage("1");       //传递一串特殊字符用于表示点击事件
+                    sender_call.sendMessage("2");       //传递一串特殊字符用于表示点击事件
                     call(actionEvent);
                 }
         );

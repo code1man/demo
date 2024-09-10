@@ -992,8 +992,6 @@ public class Home extends Application {
                     TextArea chatArea = chatWindow.getChatArea();
                     chatArea.appendText(loadChatHistory(DbUtil.getID(friendname))); // 加载历史记录
 
-
-
                     // 保存聊天窗口到缓存
                     Client.chatWindows.put(friendname, chatStage);
                 } catch (Exception ex) {
