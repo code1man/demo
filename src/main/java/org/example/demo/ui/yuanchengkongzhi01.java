@@ -12,6 +12,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.example.demo.Client;
+import org.example.demo.utils.RemoteControlUtil;
 import org.example.demo.utils.VideoUtil;
 
 import java.util.Timer;
@@ -22,9 +23,12 @@ public class yuanchengkongzhi01 extends Application {
     private int seconds = 0;
     private Label timerLabel = new Label("远程控制时间: 0 秒");
     private VideoUtil videoUtil = new VideoUtil("test", true);
+    private RemoteControlUtil remoteControlUtil;
 
     @Override
     public void start(Stage primaryStage) {
+        remoteControlUtil = new RemoteControlUtil();
+
         primaryStage.getIcons().add(new Image("logo.jpg"));
 
         // 计时器

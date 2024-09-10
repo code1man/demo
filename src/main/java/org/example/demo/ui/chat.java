@@ -1,7 +1,6 @@
 package org.example.demo.ui;
 
 import javafx.application.Application;
-
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -15,6 +14,7 @@ import javafx.stage.Modality;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.example.demo.Client;
 import org.example.demo.ui.Chat_add.Sender;
@@ -55,9 +55,8 @@ public class chat extends Application {
         this.friendName = friendName;
         //可能要改成数据库中记录的用户名
     }
-    public chat(){           //需要有一个无参的构造函数
 
-    }
+    public chat(){}
     public void initialize() {
         try {
             sender_call = new Sender("localhost", 9999);

@@ -20,6 +20,7 @@ public class RemoteControlUtil implements Closeable {
     public RemoteControlUtil() {
         try {
             Client.RemoteControlClient = new Socket(HOST_ADDRESS,HOST_PORT);
+            Client.RemoteCastClient = new Socket("localhost",6666);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

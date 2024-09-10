@@ -4,7 +4,6 @@ package org.example.demo;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
-
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
@@ -12,16 +11,12 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 
 import static org.example.demo.ui.Home.controlWindow;
 
@@ -46,19 +41,18 @@ public class Client {
     public static String signature = "摆烂";
 
     public static Socket client = null;
+    public static Socket secondClient = null;
     public static Socket RemoteControlClient = null;
     public static Socket friendClient = null;
     public static Socket CameraClient = null;
+    public static Socket RemoteCastClient = null;
 
 
     private static Thread recieveImgThread;
     private static Thread sendImgThread;
     private static Thread robotThread;
-    private Thread friendResultThread;
-    private Thread friendThread;
 
     public static Map<String, Stage> chatWindows = new HashMap<>();
-
 
     public void init() {
         sendImgThread = new Thread(() -> {
@@ -162,27 +156,6 @@ public class Client {
                 }
             } catch (AWTException e) {
                 throw new RuntimeException(e);
-            }
-        });
-
-        friendThread = new Thread(()->{
-
-        });
-
-        friendResultThread = new Thread(()->{
-            TCPReceiveUtil receiveUtil = new TCPReceiveUtil(Client.friendClient);
-            while (true) {
-                String friendReply = receiveUtil.receiveUTF();
-                if (friendReply != null && friendReply.contains(":")) {
-                    String[] reply = friendReply.split(":");
-                    if (reply[1].equals("同意")) {
-                        Client.friendNumb++;
-                        Client.friendNames.add(reply[0]);
-                        // 弹出好友同意的窗口
-                    } else if (reply[1].equals("拒绝")) {
-                        // 弹出好友不同意的窗口
-                    }
-                }
             }
         });
     }

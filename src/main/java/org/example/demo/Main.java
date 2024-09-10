@@ -8,7 +8,6 @@ import javafx.stage.Stage;
 import org.example.demo.ui.LoginApp;
 
 import java.io.IOException;
-import java.net.Socket;
 
 public class Main extends Application {
 
@@ -17,8 +16,6 @@ public class Main extends Application {
 
     @Override
      public void start(Stage stage) throws IOException {
-        Client.client = new Socket("localhost", 8888);
-
         FXMLLoader loader = new FXMLLoader(getClass().getResource("shenqing.fxml"));
         Parent root = loader.load();
         scene = new Scene(root, 640, 480);

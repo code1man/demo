@@ -51,16 +51,16 @@ public class TencentMeeting {
     Image video1=new Image("/video.png");
     Image screen1=new Image("/share.jpg");
     Image chat1=new Image("/chat.png");
-    //Image exit=new Image("/exit.jpg");
-    //Image max=new Image("/max.jpg");
+    Image exit=new Image("/exit.jpg");
+    Image max=new Image("/max.jpg");
     public void initialize()
     {
         this.setPrimaryStage(primaryStage);
 
-        //ImageView imageView3=new ImageView(max);
-        //FullScreen.setGraphic(imageView3);
-        //ImageView imageView1=new ImageView(exit);
-        //quit.setGraphic(imageView1);
+        ImageView imageView3=new ImageView(max);
+        FullScreen.setGraphic(imageView3);
+        ImageView imageView1=new ImageView(exit);
+        quit.setGraphic(imageView1);
 
         microPic=new ImageView(micro);
         microPhone.setGraphic(microPic);
