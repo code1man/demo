@@ -64,7 +64,6 @@ public class TCPReceiveUtil implements Closeable{
                 dis.readFully(imageData);
             return imageData;
         } catch (IOException e) {
-            e.printStackTrace();
             return null;
         }
     }

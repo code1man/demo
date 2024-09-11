@@ -2,25 +2,30 @@ package org.example.demo.ui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
-import javafx.stage.Modality;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 public class touping extends Application {
 
     private int seconds = 0; // 计时器的秒数
     private Label timerLabel = new Label("投屏时间: 0 秒");
+    private ImageView imageView;
+    private boolean isStart = true;
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.getIcons().add(new Image("logo.jpg"));
+        primaryStage.getIcons().add(new Image("/logo.jpg"));
         // 创建底部背景区域
         Pane bottomPane = new Pane();
-        Image backgroundImage = new Image(getClass().getResourceAsStream("back01.png")); // 替换为你的图片路径
+        Image backgroundImage = new Image(getClass().getResourceAsStream("/back01.png")); // 替换为你的图片路径
         BackgroundImage bgImage = new BackgroundImage(
                 backgroundImage,
                 BackgroundRepeat.NO_REPEAT,
@@ -44,11 +49,12 @@ public class touping extends Application {
             // 停止投屏，并弹出评分窗口
             primaryStage.close(); // 关闭投屏窗口
             showRatingWindow();   // 弹出评分窗口
+
         });
 
         // 设置计时器，更新时间
         new Thread(() -> {
-            while (true) {
+            while (isStart) {
                 try {
                     Thread.sleep(1000); // 每隔1秒更新一次
                     seconds++;
@@ -79,6 +85,8 @@ public class touping extends Application {
         primaryStage.setTitle("投屏窗口");
         primaryStage.setScene(scene);
         primaryStage.show();
+
+
     }
 
     // 弹出评分窗口

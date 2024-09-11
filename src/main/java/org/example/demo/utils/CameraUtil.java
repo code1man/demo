@@ -56,7 +56,6 @@ public class CameraUtil {
                     ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
                     try {
                         BufferedImage image = ImageIO.read(bais);
-                        System.out.println(image);
                         Platform.runLater(()->{
                             videoWindow.updateImage(image);
                         });
@@ -84,6 +83,7 @@ public class CameraUtil {
     public void closeVideoModule() {
         try {
             Client.CameraClient.close();
+            Client.confirmVidioCallClient.close();
             webcam.close();
             SendVideoThread.interrupt();
             RecieveVideoThread.interrupt();

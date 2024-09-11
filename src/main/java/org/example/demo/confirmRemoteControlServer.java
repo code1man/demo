@@ -65,6 +65,9 @@ public class confirmRemoteControlServer {
                         if (request[0].equals("ACCEPTREMOTECONTROL")) {
                             selectClient(DbUtil.getID(request[1])).send.sendUTF("ACCEPTREMOTECONTROL#" + DbUtil.getUserName(uip));
                         }
+                        if (request[0].equals("ACCEPTREMOTECASH")) {
+                            selectClient(DbUtil.getID(request[1])).send.sendUTF("ACCEPTREMOTECASH#" + DbUtil.getUserName(uip));
+                        }
                     }
                 }
             }).start();

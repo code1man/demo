@@ -19,6 +19,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.example.demo.Client;
+import org.example.demo.ui.Chat_add.VoiceCallClient;
 import org.example.demo.utils.RemoteControlUtil;
 import org.example.demo.utils.TCPSendUtil;
 
@@ -33,9 +34,11 @@ public class yuanchengkongzhi extends Application {
     private static ImageView imageView;
     private RemoteControlUtil remoteControlUtil;
     private TCPSendUtil tcpSendUtil;
+    private String friendName;
 
     public yuanchengkongzhi(String fname) {
         remoteControlUtil = new RemoteControlUtil();
+        friendName = fname;
         tcpSendUtil = new TCPSendUtil(Client.RemoteControlClient);
         tcpSendUtil.sendUTF(Client.uid + "#" + fname);
     }
@@ -57,6 +60,7 @@ public class yuanchengkongzhi extends Application {
                 BackgroundPosition.DEFAULT,
                 new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true)
         );
+
         Background background = new Background(bgImage);
         bottomPane.setBackground(background);
         bottomPane.setPrefHeight(20); // 设置底部背景高度
@@ -166,6 +170,11 @@ public class yuanchengkongzhi extends Application {
         primaryStage.show();
 
         Client.recieveRemoteHash();
+        try {
+            VoiceCallClient.main(new String[]{Client.uid, friendName});
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // 弹出评分窗口

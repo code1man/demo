@@ -34,6 +34,7 @@ public class CameraServer {
 
     static class Client {
         private final Socket client;
+        private final Socket client1;
 
         private int uid;
         private int fuid;
@@ -43,6 +44,7 @@ public class CameraServer {
 
         public Client(Socket client, Socket serverSocket) {
             this.client = client;
+            this.client1 = serverSocket;
             isRunning = true;
             this.send = new TCPSendUtil(client);
             this.receive = new TCPReceiveUtil(client);
@@ -61,17 +63,23 @@ public class CameraServer {
 
         public void run() {
             new Thread(() -> {
-
                 while (true) {
                     byte[] image = receive.receiveImg();
-                    System.out.println(image);
                     if (image != null && selectClient(fuid) != null) {
                         selectClient(fuid).send.sendImg(image);
                     }
-                    // send.sendImg(image);
-                    // 这个根据自己写的部分按照需要写
                 }
             }).start();
+
+            new Thread(()->{
+                while (true) {
+                    String message = new TCPReceiveUtil(client1).receiveUTF();
+                    if (message.equals("over")) {
+                        isRunning = false;
+                        new TCPSendUtil(selectClient(fuid).client1).sendUTF("over");
+                    }
+                }
+            });
         }
 
         public void stopCamera(){

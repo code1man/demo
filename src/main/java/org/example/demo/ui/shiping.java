@@ -1,6 +1,7 @@
 package org.example.demo.ui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -13,10 +14,13 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.demo.Client;
+import org.example.demo.ui.Chat_add.VoiceCallClient;
 import org.example.demo.utils.CameraUtil;
+import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 public class shiping extends Application {
 
@@ -50,6 +54,12 @@ public class shiping extends Application {
             hangUpBox.getChildren().clear();
             hangUpBox.getChildren().add(hangUpButton);
             hangUpBox.setAlignment(Pos.CENTER); // 使按钮居中
+
+            try {
+                VoiceCallClient.main(new String[]{Client.uid, friendName});
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         });
 
         // 根据 isSender 的值决定是否显示 senderButton
@@ -61,8 +71,10 @@ public class shiping extends Application {
 
         // 挂断按钮点击事件，关闭窗口
         hangUpButton.setOnAction(event -> {
+            new TCPSendUtil(Client.confirmVidioCallClient).sendUTF("over");
+            cameraUtil.closeVideoModule();
             primaryStage.close();
-            new TCPSendUtil(Client.CameraClient).sendUTF("over");
+            chat.terminateVoiceCall();
         });
 
         // 设置按钮布局，并增加按钮之间的间距
@@ -102,15 +114,19 @@ public class shiping extends Application {
         primaryStage.show();
 
         if (isSender) {
-            chat.initiateVoiceCall();
+            try {
+                VoiceCallClient.main(new String[]{Client.uid, friendName});
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             cameraUtil.openVideoModule(friendName);
         }
 
 
-/*        new Thread(()->{
+        new Thread(()->{
             while (true) {
-                if (Client.CameraClient != null)
-                if (new TCPReceiveUtil(Client.CameraClient).receiveUTF().equals("over")) {
+                if (Client.confirmVidioCallClient != null)
+                 if (new TCPReceiveUtil(Client.confirmVidioCallClient).receiveUTF().equals("over")) {
                     Platform.runLater(()->{
                         cameraUtil.closeVideoModule();
                         primaryStage.close();
@@ -118,7 +134,7 @@ public class shiping extends Application {
                     });
                 };
             }
-        }).start();*/
+        }).start();
     }
 
     // 创建带图标的按钮

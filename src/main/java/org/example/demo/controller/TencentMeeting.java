@@ -1,6 +1,7 @@
 // 远程投屏
 package org.example.demo.controller;
 
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -8,8 +9,15 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
+import org.example.demo.Client;
 import org.example.demo.Main;
 import org.example.demo.ui.Home;
+import org.example.demo.utils.TCPReceiveUtil;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 public class TencentMeeting {
 
@@ -42,9 +50,14 @@ public class TencentMeeting {
     private ImageView videoPic;
 
     private Stage primaryStage;
+    private Thread recieveImgThread;
+    private boolean isStart = true;
 
     @FXML
     private Button quit;
+
+    @FXML
+    private ImageView imageView;
 
     private boolean isFullScreen = false;
     Image micro=new Image("/microPhone.png");
@@ -78,6 +91,20 @@ public class TencentMeeting {
         screenPIc.setFitWidth(50);
         videoPic.setFitHeight(50);
         videoPic.setFitWidth(50);
+
+        recieveImgThread = new Thread(() -> {
+            TCPReceiveUtil receive = new TCPReceiveUtil(Client.RemoteCastClient);
+            while (isStart) {
+                byte[] imageData = receive.receiveImg();
+                ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
+                try {
+                    BufferedImage image = ImageIO.read(bais);
+                    updateImage(image);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
    public static boolean isPic1=true;
@@ -136,12 +163,21 @@ public class TencentMeeting {
 
     public void toggleFullScreen(ActionEvent actionEvent) {
         // Toggle full screen mode
-
         isFullScreen = !isFullScreen;
         primaryStage.setFullScreen(isFullScreen);
     }
 
     public void close(ActionEvent actionEvent) {
-         new Home().start(Main.stage);
+        isStart = false;
+        recieveImgThread.interrupt();
+        new Home().start(Main.stage);
+    }
+
+    public void updateImage(BufferedImage bufferedImage) {
+        if (bufferedImage != null)
+        {
+            Image javafxImage = SwingFXUtils.toFXImage(bufferedImage, null);
+            imageView.setImage(javafxImage);
+        }
     }
 }

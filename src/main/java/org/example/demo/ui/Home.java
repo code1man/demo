@@ -20,6 +20,7 @@ import javafx.stage.Window;
 import org.example.demo.Client;
 import org.example.demo.Main;
 import org.example.demo.controller.shenqingController;
+import org.example.demo.ui.Chat_add.VoiceCallClient;
 import org.example.demo.utils.RemoteControlUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
@@ -426,7 +427,7 @@ public class Home extends Application {
                         dialog.setHeaderText(null); // No header text
 
                         // Create the content of the dialog
-                        Label messageLabel = new Label( info[1] + "邀请您进行远程操控");
+                        Label messageLabel = new Label(info[1] + "邀请您进行远程操控");
 
                         Button btnAccept = new Button("接受");
                         btnAccept.setOnAction(event -> {
@@ -437,6 +438,12 @@ public class Home extends Application {
                             new TCPSendUtil(Client.RemoteControlClient).sendUTF(Client.uid + "#" + info[1]);
                             new yuanchengkongzhi01().start(Main.stage);
                             new TCPSendUtil(Client.confirmRemoteControlClient).sendUTF("ACCEPTREMOTECONTROL " + info[1]);
+
+                            try {
+                                VoiceCallClient.main(new String[]{Client.uid, info[1]});
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
                         });
 
                         Button btnReject = new Button("拒绝");
@@ -460,6 +467,48 @@ public class Home extends Application {
 
                     } else if (info[0].equals("INVITEVIDEOCALL")) {
                         new shiping(info[1], false).start(new Stage());
+                    } else if (info[0].equals("REMOTEHASHSTART")) {
+                        // Create a new Dialog
+                        Dialog<ButtonType> dialog = new Dialog<>();
+                        dialog.setTitle("远程投屏邀请");
+                        dialog.setHeaderText(null); // No header text
+
+                        // Create the content of the dialog
+                        Label messageLabel = new Label(info[1] + "邀请您进行远程操控");
+
+                        Button btnAccept = new Button("接受");
+                        btnAccept.setOnAction(event -> {
+                            chat.initiateVoiceCall();
+                            dialog.close(); // Close the dialog when accepted
+                            RemoteControlUtil remoteControlUtil = new RemoteControlUtil();
+                            new TCPSendUtil(Client.RemoteControlClient).sendUTF(Client.uid + "#" + info[1]);
+                            new touping().start(Main.stage);
+                            new TCPSendUtil(Client.confirmRemoteControlClient).sendUTF("ACCEPTREMOTECASH " + info[1]);
+
+                            try {
+                                VoiceCallClient.main(new String[]{Client.uid, info[1]});
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+
+                        Button btnReject = new Button("拒绝");
+                        btnReject.setOnAction(event -> {
+                            System.out.println("Rejected");
+                            dialog.close(); // Close the dialog when rejected
+                            new TCPSendUtil(Client.confirmRemoteControlClient).sendUTF("REJECTREMOTECONTROL " + info[1]);
+                        });
+
+                        VBox content = new VBox(10, messageLabel, btnAccept, btnReject);
+                        content.setStyle("-fx-padding: 10;");
+
+                        // Set the content of the DialogPane
+                        DialogPane dialogPane = dialog.getDialogPane();
+                        dialogPane.setContent(content);
+                        dialogPane.getButtonTypes().add(ButtonType.CANCEL); // Add default cancel button
+
+                        // Show the dialog and wait for user response
+                        dialog.showAndWait();
                     }
                 }
             } catch (Exception e) {
@@ -1097,6 +1146,18 @@ public class Home extends Application {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        new Thread(() -> {
+            System.out.println("接受中...");
+            String recieve = new TCPReceiveUtil(Client.confirmRemoteControlClient).receiveUTF();
+            System.out.println(recieve);
+            String[] result = recieve.split("#");
+
+            Platform.runLater(() -> {
+                if (result[0].equals("ACCEPTREMOTECASH")) {
+                    yuanchengcaokong01.main(null);
+                }
+            });
+        }).start();
     }
 
     // 获取被选中的好友名

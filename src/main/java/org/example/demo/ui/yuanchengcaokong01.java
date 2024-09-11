@@ -19,10 +19,10 @@ import org.example.demo.utils.VideoUtil;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class yuanchengkongzhi01 extends Application {
+public class yuanchengcaokong01 extends Application {
 
     private int seconds = 0;
-    private Label timerLabel = new Label("远程控制时间: 0 秒");
+    private Label timerLabel = new Label("远程投屏时间: 0 秒");
     private VideoUtil videoUtil = new VideoUtil("test", true);
 
     @Override
@@ -36,18 +36,17 @@ public class yuanchengkongzhi01 extends Application {
             @Override
             public void run() {
                 seconds++;
-                Platform.runLater(() -> timerLabel.setText("远程控制时间: " + seconds + " 秒"));
+                Platform.runLater(() -> timerLabel.setText("远程投屏时间: " + seconds + " 秒"));
             }
         };
         timer.scheduleAtFixedRate(timerTask, 0, 1000); // 每秒更新一次
 
         // 结束控制按钮
-        Button endControlBtn = new Button("结束控制");
+        Button endControlBtn = new Button("结束投屏");
         endControlBtn.setStyle("-fx-background-color: blue; -fx-text-fill: white; -fx-background-radius: 15px;");
         endControlBtn.setOnAction(e -> {
 
             chat.terminateVoiceCall();
-            Client.stopRemoteControl();
             Client.stopRemoteHash();
             videoUtil.stop();
             timer.cancel(); // 停止计时器
@@ -89,7 +88,7 @@ public class yuanchengkongzhi01 extends Application {
         primaryStage.setTitle("远程控制客户端");
         primaryStage.show();
 
-        Client.startRemoteControl();
+        Client.startRemoteHash();
         videoUtil.start();
     }
 
