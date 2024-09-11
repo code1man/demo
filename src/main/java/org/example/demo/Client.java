@@ -48,6 +48,7 @@ public class Client {
     public static Socket CameraClient = null;
     public static Socket RemoteCastClient = null;
     public static Socket confirmRemoteControlClient = null;
+    public static Socket confirmVidioCallClient = null;
 
     private static Thread recieveImgThread;
     private static Thread sendImgThread;
@@ -58,6 +59,7 @@ public class Client {
     public void init() {
         try {
             confirmRemoteControlClient = new Socket("localhost", 5200);
+            CameraClient = new Socket("localhost",8848);
             new TCPSendUtil(confirmRemoteControlClient).sendInt(Integer.parseInt(uid));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -123,38 +125,43 @@ public class Client {
 
                         case "mousePressed":
                             int mouseButtonPress = Integer.parseInt(order[1]);
-                            //robot.mousePress(mouseButtonPress);
+                            robot.mousePress(mouseButtonPress);
                             System.out.println("mouseButtonPress: " + mouseButtonPress);
                             break;
 
                         case "mouseReleased":
                             int mouseButtonRelease = Integer.parseInt(order[1]);
-                            //robot.mouseRelease(mouseButtonRelease);
+                            robot.mouseRelease(mouseButtonRelease);
                             System.out.println("mouseReleased: " + mouseButtonRelease);
+                            break;
+
+                        case "mouseClicked":
+                            int mouseButtonClicked = Integer.parseInt(order[1]);
+
                             break;
 
                         case "mouseDragged":
                             int dragX = Integer.parseInt(order[1]);
                             int dragY = Integer.parseInt(order[2]);
-                            // robot.mouseMove(dragX, dragY);
+                            robot.mouseMove(dragX, dragY);
                             System.out.println("dragX: " + dragX + ", dragY: " + dragY);
                             break;
 
                         case "mouseWheel":
                             int wheelAmount = Integer.parseInt(order[1]);
-                            //robot.mouseWheel(wheelAmount);
+                            robot.mouseWheel(wheelAmount);
                             System.out.println("wheelAmount: " + wheelAmount);
                             break;
 
                         case "keyPressed":
                             int keyCodePress = Integer.parseInt(order[1]);
-                            //robot.keyPress(keyCodePress);
+                            robot.keyPress(keyCodePress);
                             System.out.println("keyCodePress: " + keyCodePress);
                             break;
 
                         case "keyReleased":
                             int keyCodeRelease = Integer.parseInt(order[1]);
-                            //robot.keyRelease(keyCodeRelease);
+                            robot.keyRelease(keyCodeRelease);
                             System.out.println("keyCodeRelease: " + keyCodeRelease);
                             break;
 

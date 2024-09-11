@@ -81,13 +81,12 @@ public class RemoteControlServer {
                         selectClient(fuid).send2.sendUTF(order);
                 }
             }).start();
+
             // 远程控制
             new Thread(() -> {
                 while (isRunning) {
                     byte[] image = receive.receiveImg();
-                    System.out.println("服务器：" + image);
                     if (image != null) {
-                        System.out.println(selectClient(fuid));
                         selectClient(fuid).send.sendImg(image);
                     }
                     // 这个根据自己写的部分按照需要写

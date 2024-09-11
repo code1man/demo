@@ -2,7 +2,6 @@ package org.example.demo.utils;
 
 import javafx.scene.input.*;
 import org.example.demo.Client;
-import org.example.demo.Main;
 
 import java.awt.event.InputEvent;
 import java.io.Closeable;
@@ -49,8 +48,8 @@ public class RemoteControlUtil implements Closeable {
         String eventType = e.getEventType().getName(); // Get event type name as a string
         int x = (int) e.getX();
         int y = (int) e.getY();
-        int screenX = (int)Main.stage.getWidth();
-        int screenY = (int)Main.stage.getHeight();
+        int screenX = 1400;
+        int screenY = 1000;
 
         if (eventType.equals("MOUSE_MOVED") || eventType.equals("MOUSE_DRAGGED"))
             return "mouseMoved#" + x + "#" + y + "#" + screenX + "#" + screenY;

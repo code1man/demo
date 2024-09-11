@@ -7,7 +7,10 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -22,18 +25,9 @@ import org.example.demo.utils.DbUtil;
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import javax.swing.text.Utilities;
 import java.io.*;
-import java.net.Socket;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 
 public class chat extends Application {
     private TextArea chatArea = new TextArea();
@@ -49,7 +43,7 @@ public class chat extends Application {
     private Sender sender_call;
 
 
-    private String friendName;
+    private static String friendName;
     public chat(String username,String friendName) {
         this.username = username;
         this.friendName = friendName;
@@ -229,7 +223,7 @@ public class chat extends Application {
         }
     }
 
-    private void initiateVoiceCall() {
+    public static void initiateVoiceCall() {
         System.out.println("发起语音通话...");
         // 设置为正在通话状态
         VoiceCallClient.isCalling = true;
@@ -248,7 +242,7 @@ public class chat extends Application {
         }
     }
 
-    private void terminateVoiceCall() {
+    public static void terminateVoiceCall() {
         System.out.println("结束语音通话...");
 
         // 1. 停止音频捕获和播放
@@ -430,7 +424,7 @@ public class chat extends Application {
             }
 
             // 检查当前消息时间戳是否晚于最后一条消息的时间戳
-            if (timestamp.compareTo(lastTimestamp)>0) {
+
                 System.out.println("该离线消息已进入txt");
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(id + "_chat.txt", true))) {
                     writer.write(message);
@@ -438,7 +432,7 @@ public class chat extends Application {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }
+
         }}).start();
 
     }

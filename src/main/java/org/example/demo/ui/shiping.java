@@ -1,7 +1,6 @@
 package org.example.demo.ui;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -15,7 +14,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.demo.Client;
 import org.example.demo.utils.CameraUtil;
-import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
 import java.awt.image.BufferedImage;
@@ -26,13 +24,14 @@ public class shiping extends Application {
     public String friendName;
     private boolean cameraOn = true;
     public ImageView imageView = null;
-    private CameraUtil cameraUtil = new CameraUtil();
+    private CameraUtil cameraUtil;
     private boolean isSender = false;
     private HBox hangUpBox;
 
     public shiping(String friendName, boolean isSender) {
         this.friendName = friendName;
         this.isSender = isSender;
+        cameraUtil = new CameraUtil(friendName);
     }
 
     @Override
@@ -42,8 +41,10 @@ public class shiping extends Application {
         Button cameraButton = createIconButton("", "/shexiangtou.png");
         Button hangUpButton = createIconButton("", "/quit.jpg");
         Button acceptButton = createIconButton("", "/accept.png");
+        //接受按钮
         acceptButton.setOnAction(event -> {
-            cameraUtil.openVideoModule(friendName);
+            System.out.println(friendName);
+            //cameraUtil.openVideoModule(friendName);
             acceptButton.setDisable(true);
             hangUpBox.getChildren().clear();
             hangUpBox.getChildren().add(hangUpButton);
@@ -98,19 +99,24 @@ public class shiping extends Application {
         primaryStage.show();
 
         cameraUtil.setShiPing(this);
-        if (isSender)
-            cameraUtil.openVideoModule(friendName);
 
+        chat.initiateVoiceCall();
         new Thread(()->{
+            cameraUtil.openVideoModule(friendName);
+        }).start();
+
+/*        new Thread(()->{
             while (true) {
+                if (Client.CameraClient != null)
                 if (new TCPReceiveUtil(Client.CameraClient).receiveUTF().equals("over")) {
                     Platform.runLater(()->{
                         cameraUtil.closeVideoModule();
                         primaryStage.close();
+                        chat.terminateVoiceCall();
                     });
                 };
             }
-        }).start();
+        }).start();*/
     }
 
     // 创建带图标的按钮

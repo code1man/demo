@@ -17,13 +17,14 @@ public class TCPReceiveUtil implements Closeable{
     }
 
     //接受字符串
-    public String receiveUTF() {
-        try {
-            return dis.readUTF();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("接收字符串失败");
-        }
+    public String receiveUTF(){
+            if (dis != null) {
+                try {
+                    return dis.readUTF();
+                } catch (IOException e) {
+
+                }
+            }
         return null;
     }
 
@@ -58,12 +59,12 @@ public class TCPReceiveUtil implements Closeable{
             // 读取图像数据长度
             int length = dis.readInt();
             // 读取图像数据
-            byte[] imageData = new byte[length];
-            dis.readFully(imageData);
+            if (length < 0) {return null;}
+                byte[] imageData = new byte[length];
+                dis.readFully(imageData);
             return imageData;
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("接收图片失败");
             return null;
         }
     }

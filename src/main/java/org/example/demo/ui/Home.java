@@ -20,28 +20,15 @@ import javafx.stage.Window;
 import org.example.demo.Client;
 import org.example.demo.Main;
 import org.example.demo.controller.shenqingController;
-import org.example.demo.utils.*;
+import org.example.demo.utils.RemoteControlUtil;
+import org.example.demo.utils.TCPReceiveUtil;
+import org.example.demo.utils.TCPSendUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.Socket;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javafx.scene.text.Text;
-import javafx.stage.FileChooser;
-import javafx.stage.Popup;
-import javafx.stage.Stage;
-import javafx.stage.Window;
-import org.example.demo.Client;
-import org.example.demo.Main;
-
-import java.io.File;
-import java.io.IOException;
 
 
 public class Home extends Application {
@@ -443,6 +430,7 @@ public class Home extends Application {
 
                         Button btnAccept = new Button("接受");
                         btnAccept.setOnAction(event -> {
+                            chat.initiateVoiceCall();
                             System.out.println("Accepted");
                             dialog.close(); // Close the dialog when accepted
                             RemoteControlUtil remoteControlUtil = new RemoteControlUtil();
@@ -700,8 +688,12 @@ public class Home extends Application {
 
                         // 假设返回的数据格式为 "操作次数 好评率 状态"
                         String[] info = userInfo.split(" ");
-                        String operationCount = info[1];
-                        String goodRatingPercentage = info[2];
+                        String operationCount = null;
+                        String goodRatingPercentage = null;
+                        if (info.length > 2) {
+                            operationCount = info[1];
+                            goodRatingPercentage = info[2];
+                        }
                         String status = info[0];
 
                         // 创建操作次数标签
@@ -1032,14 +1024,15 @@ public class Home extends Application {
                             String request = "GETMESSAGE "+Client.uid+" "+friendname;
                             sendUtil.sendUTF(request);
                             String result = receiveUtil.receiveUTF();
+                            System.out.println("离线消息：" + result);
                             String []results = result.split("#");
                             TextArea chatArea = chatWindow.getChatArea();
                             //最新的离线消息时间
-                            String time1 = results[0];
-                            System.out.println("time1"+time1);
+                            /*String time1 = results[0];
+                            System.out.println("time1"+time1);*/
                             if (results.length>=3) {
                                 // 以步长3遍历数组
-                                for (int i = 1; i <= results.length - 3; i +=3) {
+                                for (int i = 0; i < results.length; i +=3) {
                                     // 假设每条消息格式为 "时间 发送者 内容"
                                     String sender= results[i];
                                     String content= results[i + 1];
@@ -1048,7 +1041,9 @@ public class Home extends Application {
                                     String formattedMessage = "";
                                     formattedMessage =  time + " " + sender + ": " + content ;
 
-                                    String request1 = "GETID "+friendname;
+                                    chat.saveMessageToFile(friendname, formattedMessage, time);
+
+                                    /*String request1 = "GETID "+friendname;
                                     sendUtil.sendUTF(request1);
 
                                     int id  = Integer.parseInt(receiveUtil.receiveUTF());
@@ -1068,15 +1063,16 @@ public class Home extends Application {
                                         } catch (IOException e) {
                                             e.printStackTrace();
                                         }
-                                    }
 
-                                    String  txtLastTime= lastTimestamp;
+                                    }*/
+
+                                    /*String  txtLastTime= lastTimestamp;
                                     System.out.println("txtlasttime"+txtLastTime);
-                                    if (time.compareTo(txtLastTime) > 0) {
-                                        chat.saveMessageToFile(friendname, formattedMessage, time);
-                                    } else {
+                                    if (time.compareTo(txtLastTime) > 0) {*/
+
+                                    /*} else {
                                         System.out.println("跳过重复消息: " + formattedMessage);
-                                    }
+                                    }*/
                                 }
                             }
                             else

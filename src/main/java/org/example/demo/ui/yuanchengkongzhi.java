@@ -96,6 +96,7 @@ public class yuanchengkongzhi extends Application {
             try {
                 remoteControlUtil.close();
                 Client.stopRemoteHash();
+                chat.terminateVoiceCall();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }

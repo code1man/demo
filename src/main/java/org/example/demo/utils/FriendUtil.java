@@ -30,8 +30,5 @@ public class FriendUtil {
         send.sendUTF(fuid + ":" + reply);
     }
 
-    public String recieveReplyFriendRequest() {
-        String recieveReply = receive.receiveUTF();
-        return recieveReply;
-    }
+
 }

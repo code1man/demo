@@ -168,10 +168,7 @@ public class LoginApp extends Application {
                 return;
             }
 
-
             String request = "LOGIN"+" "+username+" "+password;
-
-
 
             //发送登录请求
             sendUtil.sendUTF(request);

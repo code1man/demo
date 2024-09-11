@@ -54,6 +54,7 @@ public class confirmRemoteControlServer {
             new Thread(() -> {
                 for (int i = 0; i < 2; i++) {
                     String order = receive.receiveUTF();
+
                     if (order != null) {
                         System.out.println("接收到的命令" + order);
                         String[] request = order.split(" ");

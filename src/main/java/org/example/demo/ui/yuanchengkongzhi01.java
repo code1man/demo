@@ -46,6 +46,7 @@ public class yuanchengkongzhi01 extends Application {
         endControlBtn.setStyle("-fx-background-color: blue; -fx-text-fill: white; -fx-background-radius: 15px;");
         endControlBtn.setOnAction(e -> {
 
+            chat.terminateVoiceCall();
             Client.stopRemoteControl();
             Client.stopRemoteHash();
             videoUtil.stop();

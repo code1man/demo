@@ -1,21 +1,18 @@
 package org.example.demo;
 
-import javafx.scene.control.Alert;
 import org.example.demo.utils.CloseUtil;
-
 import org.example.demo.utils.DbUtil;
-
 import org.example.demo.utils.TCPReceiveUtil;
 import org.example.demo.utils.TCPSendUtil;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server {
@@ -75,8 +72,14 @@ public class Server {
         public void run() {
             new Thread(() -> {
                 while (isRunning) {
-                    String order = receive1.receiveUTF();
 
+                    String order = new String();
+                    try {
+                        order = receive1.receiveUTF();
+                    } catch (Exception e) {
+                        isRunning = false;
+                        Thread.interrupted();
+                    }
                     //接受命令
                     if (order != null) {
                         System.out.println("接收到的命令" + order);
@@ -347,7 +350,8 @@ public class Server {
             arrayList.add(messageText);
             arrayList.add(Timestamp.valueOf(LocalDateTime.now()));
             //接收方是否在线
-            if (DbUtil.getUserState(receiveid).equals("online")) {
+
+            if (selectClient(receiveid) != null) {
                 arrayList.add(1);
             } else {
                 arrayList.add(0);
@@ -415,12 +419,17 @@ public class Server {
 
             //申请
             if (status.equals("pending")) {
-                if (DbUtil.getUserState(DbUtil.getID(friendName)).equals("online")) {
+                if (selectClient(DbUtil.getID(friendName)) != null) {
                     String sql = "INSERT INTO t_friends  (userID,friendID,requestDate) VALUES (?,?,?)";
 
                     int count = DbUtil.executeUpdate(sql, arrayList);
                     System.out.println(count + "条记录   " + userid + "正在申请好友");
-                    sendUtil.sendUTF("已申请");
+                    Client fc = selectClient(DbUtil.getID(friendName));
+                    if (fc != null) {
+                        System.out.println(fc);
+                        fc.send2.sendUTF("pending#" + DbUtil.getUserName(userid));
+                        System.out.println("pending#" + DbUtil.getUserName(userid));
+                    }
                 } else {
 
                     Client fc = selectClient(DbUtil.getID(friendName));
@@ -684,7 +693,7 @@ public class Server {
 
         private void getMessage(int userid,String friendName ,TCPSendUtil sendUtil)
         {
-            String sql = "\n" +
+            /*String sql = "\n" +
                     "SELECT messageText,messageTime FROM t_messages WHERE senderID = ? AND receiverID = ? AND messageStatus = 0";
 
             int friendID = DbUtil.getID(friendName);
@@ -702,20 +711,29 @@ public class Server {
 
             ResultSet resultSet1 = DbUtil.executeQuery(sql1,arrayList);
 
-
-            try {
-                StringBuilder result = new StringBuilder();
-                while(resultSet1.next())
+                           while(resultSet1.next())
                 {
                     result.append((resultSet1.getTimestamp("messageTime")).toString()).append("#");
                 }
+
+*/
+            String sql = "\n" +
+                    "SELECT messageText,messageTime FROM t_messages WHERE senderID = ? AND receiverID = ? AND messageStatus = 0";
+            int friendID = DbUtil.getID(friendName);
+
+            ArrayList<Object> arrayList = new ArrayList<>();
+            arrayList.add(friendID);
+            arrayList.add(userid);
+
+            ResultSet resultSet = DbUtil.executeQuery(sql, arrayList);
+
+            try {
+                StringBuilder result = new StringBuilder();
+
                 while (resultSet.next()) {
                     result.append(friendName).append("#");
                     result.append(resultSet.getString("messageText")).append("#"); // 注意这里的 "username" 是小写的
                     result.append((resultSet.getTimestamp("messageTime")).toString()).append("#"); // 注意这里的 "username" 是小写的
-                    //result.append(resultSet.getDouble("goodRatingPercentage")).append(" "); // 注意这里的 "username" 是小写的
-                    //result.append(resultSet.getDouble("goodRatingPercentage")).append(" "); // 注意这里的 "username" 是小写的
-
                 }
 
                 // 如果有结果，去掉最后的空格并发送
@@ -723,8 +741,12 @@ public class Server {
                     result.setLength(result.length() - 1); // 去掉最后一个空格
                 }
 
+                System.out.println("离线消息：" + result);
                 sendUtil.sendUTF(result.toString());
 
+                sql = "\n" +
+                        "UPDATE t_messages SET messageStatus = 1 WHERE senderID = ? AND receiverID = ? AND messageStatus = 0";
+                DbUtil.executeUpdate(sql, arrayList);
 
             } catch (SQLException e) {
                 throw new RuntimeException(e);

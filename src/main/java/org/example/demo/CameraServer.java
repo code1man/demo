@@ -18,10 +18,12 @@ public class CameraServer {
         System.out.println("-----CameraServer-----");
 
         try (
-             ServerSocket server = new ServerSocket(8848)) {
+             ServerSocket server = new ServerSocket(8848);
+             ServerSocket serverSocket = new ServerSocket(8849);) {
             while (true) {
                 Socket client = server.accept();
-                Client c = new Client(client);
+                Socket client1 = serverSocket.accept();
+                Client c = new Client(client, client1);
                 all.add(c);
                 c.run();
                 if (c.client.isClosed())
@@ -36,32 +38,35 @@ public class CameraServer {
         private int uid;
         private int fuid;
         private boolean isRunning = false;
-        private final TCPSendUtil send;
-        private final TCPReceiveUtil receive;
+        private TCPSendUtil send;
+        private TCPReceiveUtil receive;
 
-        public Client(Socket client) {
+        public Client(Socket client, Socket serverSocket) {
             this.client = client;
             isRunning = true;
             this.send = new TCPSendUtil(client);
             this.receive = new TCPReceiveUtil(client);
 
-            String message = receive.receiveUTF();
+            String message = new TCPReceiveUtil(serverSocket).receiveUTF();
             String[] each = null;
             if (message != null) {
                 each = message.split(" ");
                 uid = Integer.parseInt(each[0]);
                 fuid = DbUtil.getID(each[1]);
             }
+            System.out.println(uid + " " + fuid);
 
             System.out.println("一个客户建立了链接");
         }
 
         public void run() {
             new Thread(() -> {
-                while (isRunning) {
+
+                while (true) {
                     byte[] image = receive.receiveImg();
-                    if (image != null && selectClient(fuid) != null)
-                        selectClient(fuid).send.sendImg(image);
+                    if (image != null && selectClient(fuid) != null) {
+                        selectClient(uid).send.sendImg(image);
+                    }
                     // 这个根据自己写的部分按照需要写
                 }
             }).start();
