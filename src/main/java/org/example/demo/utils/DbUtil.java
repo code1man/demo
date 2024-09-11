@@ -24,7 +24,6 @@ public class DbUtil {
         try { // 通过访问数据库的URL获取数据库连接对象
             con = DriverManager.getConnection(
                     "jdbc:mysql://127.0.0.1:3306/cac?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai","root","zkd2621023939");
-            System.out.println("数据库连接成功");
         } catch (SQLException e) {
             System.out.println("数据库连接失败");
         }

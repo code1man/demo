@@ -32,6 +32,7 @@ public class shiping extends Application {
         this.friendName = friendName;
         this.isSender = isSender;
         cameraUtil = new CameraUtil(friendName);
+        cameraUtil.setShiPing(this);
     }
 
     @Override
@@ -44,7 +45,7 @@ public class shiping extends Application {
         //接受按钮
         acceptButton.setOnAction(event -> {
             System.out.println(friendName);
-            //cameraUtil.openVideoModule(friendName);
+            cameraUtil.openVideoModule(friendName);
             acceptButton.setDisable(true);
             hangUpBox.getChildren().clear();
             hangUpBox.getChildren().add(hangUpButton);
@@ -77,33 +78,34 @@ public class shiping extends Application {
 
         // 创建一个 VBox，用于将按钮放置在页面底部
         VBox layout = new VBox();
-        layout.setStyle("-fx-background-color: black;");
+        //layout.setStyle("-fx-background-color: black;");
 
         imageView = new ImageView();
         imageView.setFitWidth(400);  // 设置背景图像的宽度
-        imageView.setFitHeight(600); // 设置背景图像的高度
+        imageView.setFitHeight(1000); // 设置背景图像的高度
         imageView.setPreserveRatio(true);
+        imageView.setStyle("-fx-background-color: black;");
 
         // 将空白区域放在上面，按钮布局添加到 VBox 底部
         StackPane spacer = new StackPane();  // 占用上方空间
-        VBox.setVgrow(spacer, Priority.ALWAYS);  // 将剩余的空间分配给空白部分
+        VBox.setVgrow(spacer, Priority.ALWAYS);// 将剩余的空间分配给空白部分
 
         layout.getChildren().addAll(spacer, buttonBox, hangUpBox);
 
         StackPane root = new StackPane();
         root.getChildren().addAll(imageView, layout);
+
         // 创建场景并显示
         Scene scene = new Scene(root, 400, 600);
         primaryStage.setScene(scene);
         primaryStage.setTitle("视频通话");
         primaryStage.show();
 
-        cameraUtil.setShiPing(this);
-
-        chat.initiateVoiceCall();
-        new Thread(()->{
+        if (isSender) {
+            chat.initiateVoiceCall();
             cameraUtil.openVideoModule(friendName);
-        }).start();
+        }
+
 
 /*        new Thread(()->{
             while (true) {
@@ -122,11 +124,11 @@ public class shiping extends Application {
     // 创建带图标的按钮
     private Button createIconButton(String text, String imagePath) {
         Image image = new Image(getClass().getResourceAsStream(imagePath));
-        ImageView imageView = new ImageView(image);
-        imageView.setFitWidth(50);
-        imageView.setFitHeight(50);
+        ImageView imageView1 = new ImageView(image);
+        imageView1.setFitWidth(50);
+        imageView1.setFitHeight(50);
 
-        Button button = new Button(text, imageView);
+        Button button = new Button(text, imageView1);
         button.setStyle("-fx-background-color: white; -fx-border-radius: 15; -fx-background-radius: 15;");
         return button;
     }

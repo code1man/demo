@@ -59,7 +59,6 @@ public class Client {
     public void init() {
         try {
             confirmRemoteControlClient = new Socket("localhost", 5200);
-            CameraClient = new Socket("localhost",8848);
             new TCPSendUtil(confirmRemoteControlClient).sendInt(Integer.parseInt(uid));
         } catch (IOException e) {
             throw new RuntimeException(e);

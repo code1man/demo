@@ -54,9 +54,9 @@ public class CameraServer {
                 uid = Integer.parseInt(each[0]);
                 fuid = DbUtil.getID(each[1]);
             }
-            System.out.println(uid + " " + fuid);
+            System.out.println("视频：" + uid + " " + fuid);
 
-            System.out.println("一个客户建立了链接");
+            System.out.println("一个客户建立了视频链接");
         }
 
         public void run() {
@@ -64,9 +64,11 @@ public class CameraServer {
 
                 while (true) {
                     byte[] image = receive.receiveImg();
+                    System.out.println(image);
                     if (image != null && selectClient(fuid) != null) {
-                        selectClient(uid).send.sendImg(image);
+                        selectClient(fuid).send.sendImg(image);
                     }
+                    // send.sendImg(image);
                     // 这个根据自己写的部分按照需要写
                 }
             }).start();
@@ -84,14 +86,6 @@ public class CameraServer {
             isRunning = false;
             CloseUtil.close(client, send, receive);
             all.remove(this);
-        }
-
-        public Socket getTargetClient(int targetUid) {
-            for (Client c : all) {
-                if (c.uid == targetUid)
-                    return c.client;
-            }
-            return null;
         }
 
         private Client selectClient(int userID) {

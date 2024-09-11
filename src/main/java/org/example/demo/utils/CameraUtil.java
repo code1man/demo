@@ -30,13 +30,13 @@ public class CameraUtil {
         // get default webcam and open it获取网络摄像头设置并打开
         try {
             Client.CameraClient = new Socket(SERVER_ADDRESS, SERVER_PORT);
-            Client.confirmVidioCallClient = new Socket("localhost", 8845);
+            Client.confirmVidioCallClient = new Socket("localhost", 8849);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         tcpReceiveUtil = new TCPReceiveUtil(Client.CameraClient);
         tcpSendUtil = new TCPSendUtil(Client.CameraClient);
-        tcpSendUtil.sendUTF(Client.uid + " " + friendName);
+        new TCPSendUtil(Client.confirmVidioCallClient).sendUTF(Client.uid + " " + friendName);
 
         webcam = Webcam.getDefault();
 
@@ -49,27 +49,28 @@ public class CameraUtil {
         });
 
         RecieveVideoThread = new Thread(()->{
-            Platform.runLater(()->{
             while(true) {
                 // get image获取图片
                 byte[] imageData = tcpReceiveUtil.receiveImg();
-                ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
-
-                try {
-                    BufferedImage image = ImageIO.read(bais);
-                    videoWindow.updateImage(image);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                if (imageData != null) {
+                    ByteArrayInputStream bais = new ByteArrayInputStream(imageData);
+                    try {
+                        BufferedImage image = ImageIO.read(bais);
+                        System.out.println(image);
+                        Platform.runLater(()->{
+                            videoWindow.updateImage(image);
+                        });
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
-            });
         });
     }
 
     //打开摄像头
     public void openVideoModule(String friendName) {
         try {
-
             webcam.open();
 
             SendVideoThread.start();
